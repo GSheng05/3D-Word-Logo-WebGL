@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Animation Test</title>
+<!--
+    Test page for the animation subsystem (src/animation/).
+    Draws a coloured cube instead of the word logo so the animation can be
+    checked before the geometry and rendering code exist.
+    Open this file directly in a browser; no server needed.
+
+    Face colours:  front = red, back = cyan, right = green,
+                   left = magenta, top = yellow, bottom = blue
+    "Rotate right" should swing the red face towards the green side.
+-->
+<style>
+    html, body { margin: 0; height: 100%; background: #111; color: #eee; font: 14px Arial, sans-serif; }
+    canvas     { display: block; width: 100%; height: 100%; }
+    #panel     { position: absolute; top: 12px; left: 12px; padding: 12px; background: rgba(0,0,0,0.6);
+                 border-radius: 6px; display: flex; flex-direction: column; gap: 8px; }
+    #panel div { display: flex; gap: 6px; align-items: center; }
+    button     { padding: 4px 12px; }
+    small      { color: #999; }
+</style>
+</head>
+<body>
+<canvas id="gl-canvas"></canvas>
+
+<div id="panel">
+    <div>
+        <button id="startBtn">Start</button>
+        <button id="stopBtn">Stop</button>
+        <button id="resetBtn">Reset</button>
+    </div>
+    <div>
+        <label for="speedSlider">Speed</label>
+        <input id="speedSlider" type="range" min="15" max="240" step="15" value="60">
+        <span id="speedValue"></span>
+    </div>
+    <div>Phase: <span id="phaseLabel"></span></div>
+    <small>Space = start/pause &nbsp; R = reset &nbsp; +/- = speed</small>
+</div>
+
+<!-- Real MV.js (currently empty; the fallback below fills in until it is added) -->
+<script src="../Common/MV.js"></script>
+<script>
+// Temporary stand-ins for the four MV.js functions animation.js needs.
+// Matrices are row-major arrays of rows, like Angel's. Skipped automatically
+// once the real MV.js defines mat4.
+if (typeof mat4 === "undefined") {
+    window.mat4 = function () {
+        return [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+    };
+    window.translate = function (x, y, z) {
+        return [[1, 0, 0, x], [0, 1, 0, y], [0, 0, 1, z], [0, 0, 0, 1]];
+    };
+    window.rotate = function (angle, axis) {
+        var len = Math.hypot(axis[0], axis[1], axis[2]);
+        var x = axis[0] / len, y = axis[1] / len, z = axis[2] / len;
+        var c = Math.cos(angle * Math.PI / 180), s = Math.sin(angle * Math.PI / 180), o = 1 - c;
+        return [
+            [x * x * o + c,     x * y * o - z * s, x * z * o + y * s, 0],
+            [x * y * o + z * s, y * y * o + c,     y * z * o - x * s, 0],
+            [x * z * o - y * s, y * z * o + x * s, z * z * o + c,     0],
+            [0, 0, 0, 1]
+        ];
+    };
+    window.mult = function (a, b) { return mul4(a, b); };
+}
+
+// 4x4 multiply that reads m[row][col], so it works with both the
+// stand-ins and real MV.js matrices.
+function mul4(a, b) {
+    var r = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+    for (var i = 0; i < 4; i++)
+        for (var j = 0; j < 4; j++)
+            for (var k = 0; k < 4; k++)
+                r[i][j] += a[i][k] * b[k][j];
+    return r;
+}
+</script>
+
+<script src="../src/animation/phases.js"></script>
+<script src="../src/animation/animation.js"></script>
+<script src="../src/animation/animationControls.js"></script>
+
+<script>
+// ---------------- Minimal cube renderer (test only) ----------------
+
+var VERTEX_SHADER = [
+    "attribute vec3 aPosition;",
+    "attribute vec3 aColor;",
+    "uniform mat4 uMVP;",
+    "varying vec3 vColor;",
+    "void main() {",
+    "    vColor = aColor;",
+    "    gl_Position = uMVP * vec4(aPosition, 1.0);",
+    "}"
+].join("\n");
+
+var FRAGMENT_SHADER = [
+    "precision mediump float;",
+    "varying vec3 vColor;",
+    "void main() { gl_FragColor = vec4(vColor, 1.0); }"
+].join("\n");
+
+var gl, canvas, program, uMVP;
+var vertexCount = 0;
+
+// Unit cube centred on the origin: 6 faces x 2 triangles x 3 vertices.
+function buildCube() {
+    var p = [
+        [-0.5, -0.5,  0.5], [ 0.5, -0.5,  0.5], [ 0.5,  0.5,  0.5], [-0.5,  0.5,  0.5],  // 0-3 front (z+)
+        [-0.5, -0.5, -0.5], [ 0.5, -0.5, -0.5], [ 0.5,  0.5, -0.5], [-0.5,  0.5, -0.5]   // 4-7 back (z-)
+    ];
+    var faces = [
+        { v: [0, 1, 2, 3], color: [0.90, 0.15, 0.15] },  // front  - red
+        { v: [5, 4, 7, 6], color: [0.15, 0.80, 0.85] },  // back   - cyan
+        { v: [1, 5, 6, 2], color: [0.20, 0.75, 0.25] },  // right  - green
+        { v: [4, 0, 3, 7], color: [0.80, 0.25, 0.80] },  // left   - magenta
+        { v: [3, 2, 6, 7], color: [0.95, 0.85, 0.20] },  // top    - yellow
+        { v: [4, 5, 1, 0], color: [0.20, 0.35, 0.90] }   // bottom - blue
+    ];
+
+    var positions = [], colors = [];
+    faces.forEach(function (f) {
+        [0, 1, 2, 0, 2, 3].forEach(function (i) {        // quad -> two triangles
+            positions.push.apply(positions, p[f.v[i]]);
+            colors.push.apply(colors, f.color);
+        });
+    });
+    return { positions: positions, colors: colors };
+}
+
+function compileShader(type, source) {
+    var s = gl.createShader(type);
+    gl.shaderSource(s, source);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+}
+
+function bindAttribute(name, data) {
+    var buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
+    var loc = gl.getAttribLocation(program, name);
+    gl.vertexAttribPointer(loc, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(loc);
+}
+
+// Standard perspective matrix (row-major).
+function perspectiveMatrix(fovyDeg, aspect, near, far) {
+    var f = 1 / Math.tan(fovyDeg * Math.PI / 360);
+    return [
+        [f / aspect, 0, 0, 0],
+        [0, f, 0, 0],
+        [0, 0, (far + near) / (near - far), 2 * far * near / (near - far)],
+        [0, 0, -1, 0]
+    ];
+}
+
+// Row-major matrix -> column-major Float32Array for WebGL.
+function toColumnMajor(m) {
+    var out = new Float32Array(16);
+    for (var c = 0; c < 4; c++)
+        for (var r = 0; r < 4; r++)
+            out[c * 4 + r] = m[r][c];
+    return out;
+}
+
+function resizeCanvas() {
+    canvas.width  = canvas.clientWidth  * window.devicePixelRatio;
+    canvas.height = canvas.clientHeight * window.devicePixelRatio;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    render();
+}
+
+function render() {
+    var projection = perspectiveMatrix(45, canvas.width / canvas.height, 0.1, 100);
+    var view = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, -5], [0, 0, 0, 1]];  // camera at z = 5
+    var mvp = mul4(mul4(projection, view), getAnimationModelMatrix());
+
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.uniformMatrix4fv(uMVP, false, toColumnMajor(mvp));
+    gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
+}
+
+window.onload = function () {
+    canvas = document.getElementById("gl-canvas");
+    gl = canvas.getContext("webgl");
+    if (!gl) { alert("WebGL is not available"); return; }
+
+    program = gl.createProgram();
+    gl.attachShader(program, compileShader(gl.VERTEX_SHADER, VERTEX_SHADER));
+    gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, FRAGMENT_SHADER));
+    gl.linkProgram(program);
+    gl.useProgram(program);
+    uMVP = gl.getUniformLocation(program, "uMVP");
+
+    var cube = buildCube();
+    bindAttribute("aPosition", cube.positions);
+    bindAttribute("aColor", cube.colors);
+    vertexCount = cube.positions.length / 3;
+
+    gl.clearColor(0.07, 0.07, 0.07, 1);
+    gl.enable(gl.DEPTH_TEST);
+
+    // Hook into the animation subsystem, exactly as main.js will.
+    setRenderCallback(render);
+    initAnimationControls();
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+};
+</script>
+</body>
+</html>
