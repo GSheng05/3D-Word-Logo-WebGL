@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>M1 Geometry Lab</title>
+<style>
+*{box-sizing:border-box} body{margin:0;background:#0b1020;color:#e5edff;font:15px system-ui,sans-serif}
+main{display:grid;grid-template-columns:300px 1fr;min-height:100vh} aside{padding:24px;background:#141d32}
+h1{font-size:24px;margin:0 0 8px} p{color:#acbad5;line-height:1.5} label{display:block;margin-top:18px}
+input,select,button{font:inherit} input[type=text],select,button{width:100%;padding:9px;margin-top:6px;border:1px solid #52617e;border-radius:6px;background:#202f4c;color:white}
+input[type=range]{width:100%;accent-color:#69dfd2} button{cursor:pointer} output{float:right;color:#69dfd2}
+canvas{width:100%;height:100%;display:block;min-height:420px} section{height:100vh;min-width:0}
+#error{color:#ffb0a8;min-height:2.8em} pre{font-size:12px;white-space:pre-wrap;color:#acbad5} small{color:#acbad5}
+@media(max-width:700px){main{grid-template-columns:1fr}section{height:60vh}aside{padding:18px}}
+</style>
+</head>
+<body>
+<main><aside>
+<h1>M1 Geometry Lab</h1><p>Bitmap letters built from indexed 3D blocks. This is a standalone geometry test, not the final TV ident.</p>
+<label for="word">Word · 2–4 letters</label><input id="word" type="text" value="USM" maxlength="12">
+<label for="block">Block size <output id="blockValue"></output></label><input id="block" type="range" min="0.2" max="2" step="0.1" value="1">
+<label for="depth">Extrusion depth <output id="depthValue"></output></label><input id="depth" type="range" min="0.1" max="5" step="0.1" value="1">
+<label for="spacing">Letter spacing <output id="spacingValue"></output></label><input id="spacing" type="range" min="0" max="4" step="0.1" value="1">
+<label for="yaw">View rotation <output id="yawValue"></output></label><input id="yaw" type="range" min="-180" max="180" step="1" value="20">
+<label for="colorMode">Diagnostic colours</label><select id="colorMode"><option value="face">By face</option><option value="letter">By letter</option></select>
+<button id="front">Front view</button><button id="reset">Reset parameters</button>
+<p id="error" role="alert"></p><pre id="stats"></pre>
+<small>Back-face culling is enabled to expose winding errors. Invalid input retains the last valid mesh. View auto-fits the mesh.</small>
+</aside><section><canvas id="canvas" aria-label="Interactive 3D word preview"></canvas></section></main>
+<script src="../src/geometry/font.js"></script><script src="../src/geometry/cube.js"></script><script src="../src/geometry/word.js"></script>
+<script src="geometry-preview.js"></script>
+</body></html>
