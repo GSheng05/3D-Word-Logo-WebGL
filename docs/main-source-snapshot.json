@@ -1,0 +1,169 @@
+{
+  "source": "https://github.com/GSheng05/3D-Word-Logo-WebGL",
+  "branch": "main",
+  "tree": "b29bfe52c770fcfad0710462e6b4f058aab5b75f",
+  "date": "2026-11-01",
+  "preservedLocalEdits": [
+    "CPC354-Assignment-1/index.html",
+    "CPC354-Assignment-1/styles/style.css",
+    "CPC354-Assignment-1/src/ui/controls.js",
+    "CPC354-Assignment-1/src/ui/events.js"
+  ],
+  "files": [
+    {
+      "path": "CPC354-Assignment-1/.gitignore",
+      "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "size": 0
+    },
+    {
+      "path": "CPC354-Assignment-1/README.md",
+      "sha": "2c574b402c1a51ea9118418b5f33ee8169c52554",
+      "size": 15457
+    },
+    {
+      "path": "CPC354-Assignment-1/index.html",
+      "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "size": 0
+    },
+    {
+      "path": "CPC354-Assignment-1/Common/MV.js",
+      "sha": "d5609ae8ca177864b2a2597b7626c0bac975bb05",
+      "size": 27948
+    },
+    {
+      "path": "CPC354-Assignment-1/Common/SOURCE.md",
+      "sha": "0f0989955ed710bcaa9ad6ad909dd34c574efa0b",
+      "size": 1783
+    },
+    {
+      "path": "CPC354-Assignment-1/Common/initShaders.js",
+      "sha": "b621a45ed5f68994373d462b344df1d81382dc2c",
+      "size": 1963
+    },
+    {
+      "path": "CPC354-Assignment-1/docs/M1-geometry.md",
+      "sha": "ef9f1d7a9b368684981b0200eda425b46dc52d91",
+      "size": 7737
+    },
+    {
+      "path": "CPC354-Assignment-1/src/main.js",
+      "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "size": 0
+    },
+    {
+      "path": "CPC354-Assignment-1/styles/style.css",
+      "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "size": 0
+    },
+    {
+      "path": "CPC354-Assignment-1/test/animation-test.html",
+      "sha": "bcdf32ed5c76a8e422ba6f4c37ee2d14e9777351",
+      "size": 7816
+    },
+    {
+      "path": "CPC354-Assignment-1/test/geometry-preview.js",
+      "sha": "c594fa5dcf9bc79b94d81e36c8ec9ccd8ec69a1b",
+      "size": 5944
+    },
+    {
+      "path": "CPC354-Assignment-1/test/geometry-test.html",
+      "sha": "b4251f201e8c04bbbe43d2bf98dbf51039a61c66",
+      "size": 2677
+    },
+    {
+      "path": "CPC354-Assignment-1/test/geometry.test.cjs",
+      "sha": "c816061b44de5ddf01958e75e2eac5905cec0b3d",
+      "size": 4999
+    },
+    {
+      "path": "CPC354-Assignment-1/src/animation/animation.js",
+      "sha": "ea9d50c9cb3d3c4f0a881187b328671d54f03b48",
+      "size": 4998
+    },
+    {
+      "path": "CPC354-Assignment-1/src/animation/animationControls.js",
+      "sha": "954ff923df95262ef43213af45d15e41cb0ecc9d",
+      "size": 4051
+    },
+    {
+      "path": "CPC354-Assignment-1/src/animation/phases.js",
+      "sha": "e21a340b38bc14ee52e6002d547ca971c838138e",
+      "size": 4908
+    },
+    {
+      "path": "CPC354-Assignment-1/src/geometry/cube.js",
+      "sha": "e88477910e28b6e59ed3371d45439c38e4c5d775",
+      "size": 2226
+    },
+    {
+      "path": "CPC354-Assignment-1/src/geometry/font.js",
+      "sha": "b3c3af37c04baad94289c490f24e3b06689f928b",
+      "size": 2217
+    },
+    {
+      "path": "CPC354-Assignment-1/src/geometry/word.js",
+      "sha": "b913945f094e1f1525310e6cb1a7fcf16846becd",
+      "size": 3916
+    },
+    {
+      "path": "CPC354-Assignment-1/src/graphics/camera.js",
+      "sha": "b973b6726fdc281c4c373908e294a0794955c303",
+      "size": 838
+    },
+    {
+      "path": "CPC354-Assignment-1/src/graphics/projection.js",
+      "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "size": 0
+    },
+    {
+      "path": "CPC354-Assignment-1/src/graphics/resize.js",
+      "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "size": 0
+    },
+    {
+      "path": "CPC354-Assignment-1/src/graphics/transforms.js",
+      "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "size": 0
+    },
+    {
+      "path": "CPC354-Assignment-1/src/rendering/buffers.js",
+      "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "size": 0
+    },
+    {
+      "path": "CPC354-Assignment-1/src/rendering/lighting.js",
+      "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "size": 0
+    },
+    {
+      "path": "CPC354-Assignment-1/src/rendering/shaders.js",
+      "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "size": 0
+    },
+    {
+      "path": "CPC354-Assignment-1/src/rendering/webgl.js",
+      "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "size": 0
+    },
+    {
+      "path": "CPC354-Assignment-1/src/ui/backdrop.js",
+      "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "size": 0
+    },
+    {
+      "path": "CPC354-Assignment-1/src/ui/colors.js",
+      "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "size": 0
+    },
+    {
+      "path": "CPC354-Assignment-1/src/ui/controls.js",
+      "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "size": 0
+    },
+    {
+      "path": "CPC354-Assignment-1/src/ui/events.js",
+      "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "size": 0
+    }
+  ]
+}

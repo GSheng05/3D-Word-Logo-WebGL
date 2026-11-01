@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Logo Studio — M5 preview</title>
+  <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="topbar"><div class="brand"><span class="brand-icon">◈</span><div><strong>Logo Studio</strong><small>CPC354 · 3D Word Logo</small></div></div><div class="top-actions"><span class="badge">M5 mock preview</span><button id="focusBtn" class="icon-button" type="button" aria-pressed="false">Focus mode</button><button id="sidebarBtn" class="icon-button" type="button" aria-controls="sidebar" aria-expanded="true">Hide settings</button></div></header>
+    <main class="workspace">
+      <section class="preview" aria-label="Logo preview">
+        <div class="preview-top"><div><span class="eyebrow">YOUR PREVIEW</span><h1>Make it yours.</h1><p>Adjust your logo in real time.</p></div><span class="preview-status"><i></i> Mock preview</span></div>
+        <div class="stage" id="stage"><div class="stage-glow"></div><div class="logo" id="logo" aria-label="Mock logo preview">USM</div><div class="stage-caption">Interface preview · WebGL integration pending</div></div>
+        <div class="playback" aria-label="Playback controls"><button type="button" id="startBtn" class="play-button">▶ <span>Start</span></button><button type="button" id="stopBtn">Ⅱ <span>Pause</span></button><button type="button" id="resetBtn">↺ <span>Reset</span></button><span class="playback-divider"></span><span id="phaseLabel" class="playback-status">Ready</span></div>
+        <p class="shortcuts">SPACE <span>play / pause</span>　 R <span>reset</span>　 F <span>focus</span>　 H <span>settings</span></p>
+      </section>
+      <aside class="sidebar" id="sidebar" aria-label="Logo settings">
+        <div class="sidebar-heading"><div><span class="eyebrow">STUDIO CONTROLS</span><h2>Settings</h2></div><span class="settings-mark">✳</span></div>
+        <p class="sidebar-intro">Shape the look and feel of your logo.</p>
+        <details open><summary><span><b>01</b> Logo</span></summary><div class="section-content"><label for="wordInput">Your word <span class="hint">2–4 letters</span></label><input id="wordInput" type="text" value="USM" autocomplete="off" spellcheck="false" aria-describedby="wordError wordHint"><div class="input-footer"><span id="wordHint">Letters A–Z only</span><span id="wordCount">3 / 4</span></div><p id="wordError" class="error" role="alert"></p><label for="depthSlider">Extrusion depth <output id="depthValue">1.0</output></label><input id="depthSlider" type="range" min="0.2" max="3" step="0.1" value="1"><div class="range-labels"><span>Thin</span><span>Deep</span></div></div></details>
+        <details open><summary><span><b>02</b> Colour</span></summary><div class="section-content"><label for="colourInput">Logo colour <span class="hint">Single colour</span></label><div class="colour-row"><input id="colourInput" type="color" value="#80a8ff"><span id="colourValue">#80A8FF</span><span class="colour-tag">CUSTOM</span></div><p class="helper">More colour modes will be added in the next phase.</p></div></details>
+        <details><summary><span><b>03</b> Camera</span><em>Later</em></summary><div class="section-content"><p class="helper">Projection controls will be available after camera integration.</p></div></details>
+        <details><summary><span><b>04</b> Lighting & material</span><em>Later</em></summary><div class="section-content"><p class="helper">Lighting, materials and shadows will be available after renderer integration.</p></div></details>
+        <details open><summary><span><b>05</b> Animation</span></summary><div class="section-content"><label for="speedSlider">Animation speed <output id="speedValue">1.0×</output></label><input id="speedSlider" type="range" min="0.5" max="2" step="0.1" value="1"><div class="range-labels"><span>Slower</span><span>Faster</span></div><p class="helper">Preview motion is simulated until the animation engine is connected.</p></div></details>
+        <details><summary><span><b>06</b> Export</span><em>Later</em></summary><div class="section-content"><p class="helper">Video export will be available after recording integration.</p></div></details>
+        <div class="sidebar-footer">Made for your next big ident <span>✦</span></div>
+      </aside>
+    </main>
+    <button id="restoreSidebarBtn" class="restore-button" type="button" hidden>☰ &nbsp; Show settings</button>
+    <button id="exitFocusBtn" class="exit-focus" type="button" hidden>Exit focus mode</button>
+    <div id="statusMessage" class="sr-only" role="status" aria-live="polite"></div>
+  </div>
+  <script src="src/ui/adapter.js"></script><script src="src/ui/mocks.js"></script><script src="src/ui/state.js"></script><script src="src/ui/controls.js"></script><script src="src/ui/events.js"></script>
+</body>
+</html>
