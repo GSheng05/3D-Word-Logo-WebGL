@@ -4,7 +4,7 @@
     'use strict';
 
     // M1 supplies XYZ positions; M5 supplies RGBA colours.
-    // Matrix values are uploaded later, when drawing is implemented.
+    // webgl.js supplies model, view and projection for each draw.
     const vertexSource = `
         attribute vec3 aPosition;
         attribute vec4 aColour;
@@ -21,7 +21,7 @@
         }
     `;
 
-    // Phase 1 preserves vertex colours. Lighting comes in a later phase.
+    // Direct vertex colours isolate geometry/transforms; lighting comes later.
     const fragmentSource = `
         precision mediump float;
 
