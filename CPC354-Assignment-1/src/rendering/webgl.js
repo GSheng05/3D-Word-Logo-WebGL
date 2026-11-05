@@ -1,9 +1,8 @@
 // M2: WebGL context and frame-state setup. Call initialize once at startup.
-// Buffers and draw calls are added in later phases. M3 owns resizing/viewport.
+// Phase 2 manages buffers; drawing comes in Phase 3. M3 owns resizing/viewport.
 (function (root) {
     'use strict';
 
-    /** Validate an RGBA clear colour before passing it to WebGL. */
     function checkClearColour(value) {
         if (
             !value ||
@@ -44,6 +43,15 @@
             );
         }
 
+        if (
+            !root.M2.buffers ||
+            typeof root.M2.buffers.create !== 'function'
+        ) {
+            throw new Error(
+                'Load buffers.js before initializing the renderer.'
+            );
+        }
+
         // Transparent clearing lets the eventual M5 backdrop show through.
         const clearColour = options.clearColour === undefined
             ? [0, 0, 0, 0]
@@ -52,7 +60,6 @@
         checkClearColour(clearColour);
 
         // WebGL 1 matches the GLSL sources in shaders.js.
-        // Request a depth buffer so nearer surfaces can hide farther ones.
         const gl = canvas.getContext('webgl', {
             alpha: true,
             depth: true
@@ -63,6 +70,7 @@
         }
 
         const shader = root.M2.shaders.createProgram(gl);
+        const buffers = root.M2.buffers.create(gl);
 
         gl.useProgram(shader.program);
         gl.enable(gl.DEPTH_TEST);
@@ -92,11 +100,13 @@
             gl.clearColor(...value);
         }
 
-        /** Release this phase's GPU resource when the application shuts down. */
+        /** Release both mesh buffers and the shader program. */
         function dispose() {
             if (disposed) {
                 return;
             }
+
+            buffers.dispose();
 
             if (gl.getParameter(gl.CURRENT_PROGRAM) === shader.program) {
                 gl.useProgram(null);
@@ -109,9 +119,14 @@
         return {
             gl,
             shader,
+            buffers,
             clear,
             setClearColour,
-            dispose
+            dispose,
+
+            // Drawing is requested separately during application integration.
+            replaceGeometry: buffers.replaceGeometry,
+            updateColors: buffers.updateColors
         };
     }
 
