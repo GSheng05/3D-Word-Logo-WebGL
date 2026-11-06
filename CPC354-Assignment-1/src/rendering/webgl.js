@@ -58,6 +58,11 @@
 
         checkClearColour(clearColour);
 
+        const lighting = root.M2.lighting;
+        if (!lighting) throw new Error('Load lighting.js before initializing the renderer.');
+        let light = lighting.configure(lighting.defaults, {});
+        let material = lighting.materials.Matte;
+
         // WebGL 1 matches the GLSL sources in shaders.js.
         // Context options are explicit here so depth testing is available.
         const gl = canvas.getContext('webgl', { alpha: true, depth: true });
@@ -78,6 +83,18 @@
 
         function ensureActive() {
             if (disposed) throw new Error('This renderer has been disposed.');
+        }
+
+        /** Change light settings for the next draw, including a paused redraw. */
+        function setLight(changes) {
+            ensureActive();
+            light = lighting.configure(light, changes);
+        }
+
+        /** Validate the entire update before replacing the active material. */
+        function setMaterial(changes) {
+            ensureActive();
+            material = lighting.configureMaterial(material, changes);
         }
 
         /** Clear the frame without advancing animation or scheduling a loop. */
@@ -116,7 +133,14 @@
             gl.uniformMatrix4fv(shader.uniforms.model, false, model);
             gl.uniformMatrix4fv(shader.uniforms.view, false, view);
             gl.uniformMatrix4fv(shader.uniforms.projection, false, projection);
-
+            // The direction stays in world space as the model and camera move.
+            gl.uniform3fv(shader.uniforms.lightDirection, light.direction);
+            gl.uniform1f(shader.uniforms.lightIntensity, light.intensity);
+            gl.uniform1f(shader.uniforms.ambient, lighting.ambient);
+            gl.uniform1f(shader.uniforms.diffuseScale, material.diffuse);
+            gl.uniform1f(shader.uniforms.specularTint, material.tint);
+            gl.uniform1f(shader.uniforms.shininess, material.shininess);
+            gl.uniform1f(shader.uniforms.specularIntensity, material.specularIntensity);
             buffers.bind(shader.attributes);
             clear();
 
@@ -152,13 +176,7 @@
         }
 
         return {
-            gl,
-            shader,
-            buffers,
-            clear,
-            draw,
-            setClearColour,
-            dispose,
+            gl, shader, buffers, clear, draw, setLight, setMaterial, setClearColour, dispose,
 
             // Match M5's existing adapter names; drawing is requested separately.
             replaceGeometry: buffers.replaceGeometry,

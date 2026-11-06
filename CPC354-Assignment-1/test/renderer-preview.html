@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>M2 Phase 3 — Development preview</title>
+    <title>M2 Phase 4 — Directional lighting preview</title>
 
     <style>
         html,
@@ -45,6 +45,7 @@
 
     <script src="../src/rendering/shaders.js"></script>
     <script src="../src/rendering/buffers.js"></script>
+    <script src="../src/rendering/lighting.js"></script>
     <script src="../src/rendering/webgl.js"></script>
 
     <script>
@@ -106,7 +107,8 @@
                         const distance = radius * 3;
 
                         renderer.draw({
-                            model: mat4(),
+                            // Preview pose exposes the front and side faces for lighting inspection.
+                            model: rotateY(25),
 
                             view: lookAt(
                                 vec3(0, 0, distance),
