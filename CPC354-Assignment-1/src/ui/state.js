@@ -12,14 +12,20 @@
 // =============================================================
 (function (root) {
   'use strict';
+  const colourApi = typeof module !== 'undefined' && module.exports ? require('./colors.js') : root.M5;
   // draftWord is what the user is editing; renderedWord/mesh describe
   // the last successful replacement. Layout flags are independent so
   // leaving Focus Mode restores the existing sidebar preference.
-  function createState() {
+  function createState(config = {}) {
     return { draftWord: 'USM', renderedWord: '', depth: 1, colour: '#80a8ff', mesh: null,
-      speed: 1, sidebarOpen: true, focus: false, recording: false };
+      speed: 1, sidebarOpen: true, focus: false, recording: false,
+      colours: colourApi.createColourSettings(), projection: 'perspective',
+      light: { ...(config.light || { horizontal: -45, vertical: 35, intensity: 1 }) },
+      lightPreset: 'Top Left', material: 'Matte',
+      materialDefaults: JSON.parse(JSON.stringify(config.materials || {})),
+      materials: JSON.parse(JSON.stringify(config.materials || {})) };
   }
-  // Convert #RRGGBB to normalized RGBA (alpha = 1). M1 positions have
+  // Convert #RRGGBB to normalized RGBA (alpha = 1). Mesh
   // positions contain three numbers per vertex; colours contain four.
   // Assigns the same opaque colour to every vertex.
   function coloursFor(mesh, colour) {
@@ -37,7 +43,7 @@
   function replace(state, word, depth, adapter) {
     try {
       const mesh = adapter.buildGeometry({ word, extrusionDepth: depth });
-      const colors = coloursFor(mesh, state.colour);
+      const colors = colourApi.makeColors(mesh, state.colours);
       adapter.replaceGeometry(mesh, colors);
       state.mesh = mesh; state.renderedWord = mesh.word; state.depth = depth;
       // A paused logo must also show edits; no playback reset is needed.
@@ -54,9 +60,43 @@
   }
   // Reuse the current mesh and update only its colour data.
   function applyColour(state, colour, adapter) {
-    try { const rgba = coloursFor(state.mesh, colour); adapter.updateColors(rgba); state.colour = colour; adapter.requestRender(); return { ok: true }; }
-    catch (error) { return { ok: false, error: error.message }; }
+    const next = JSON.parse(JSON.stringify(state.colours));
+    next.single.colour = colour;
+    next.single.palette = 'Custom';
+    return applyColourSettings(state, next, adapter);
   }
-  if (typeof module !== 'undefined' && module.exports) module.exports = { createState, applyWord, applyDepth, applyColour, coloursFor };
-  root.M5 = Object.assign(root.M5 || {}, { createState, applyWord, applyDepth, applyColour, coloursFor });
+
+  // Commit settings only after the new colour buffer has uploaded successfully.
+  function applyColourSettings(state, next, adapter) {
+    try {
+      const rgba = colourApi.makeColors(state.mesh, next);
+      adapter.updateColors(rgba);
+      state.colours = next;
+      state.colour = next.single.colour;
+      adapter.requestRender();
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  }
+
+  // Send saved values with the preset because preset selection loads shader defaults.
+  function applyMaterial(state, preset, changes, adapter) {
+    try {
+      const saved = state.materials[preset];
+      if (!saved) throw new RangeError('Unknown material preset.');
+      const next = { ...saved, ...changes };
+      adapter.setMaterial({ preset, shininess: next.shininess, specularIntensity: next.specularIntensity });
+      state.materials[preset] = next;
+      state.material = preset;
+      adapter.requestRender();
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  }
+
+  const api = { createState, applyWord, applyDepth, applyColour, coloursFor, applyColourSettings, applyMaterial };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  root.M5 = Object.assign(root.M5 || {}, api);
 })(typeof window === 'undefined' ? globalThis : window);

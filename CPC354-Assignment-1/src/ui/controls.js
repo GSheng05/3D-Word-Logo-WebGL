@@ -1,24 +1,12 @@
-// =============================================================
-// controls.js - M5 settings, labels and mock preview presentation
-// -------------------------------------------------------------
-// Reads session/playback state and updates the existing HTML elements.
-// Event registration is handled separately by events.js.
-//
-// Public API: M5.initControls(doc, state, adapter) -> view methods
-// Depends on: adapter.js, state.js and the IDs defined in index.html.
-// Current preview uses CSS text/motion, not the WebGL renderer.
-// =============================================================
+// controls.js - Renders session settings and playback feedback without owning events.
 (function (root) {
   'use strict';
   const M5 = root.M5;
   function initControls(doc, state, adapter) {
     const get = id => doc.getElementById(id);
-    const app = get('app');
-    // Applies sidebar and Focus Mode flags, synchronizes accessibility
-    // attributes and requests a viewport resize for the updated layout.
     function renderLayout() {
-      app.classList.toggle('is-hidden', !state.sidebarOpen);
-      app.classList.toggle('is-focus', state.focus);
+      get('app').classList.toggle('is-hidden', !state.sidebarOpen);
+      get('app').classList.toggle('is-focus', state.focus);
       get('sidebarBtn').setAttribute('aria-expanded', String(state.sidebarOpen));
       get('sidebarBtn').textContent = state.sidebarOpen ? 'Hide settings' : 'Show settings';
       get('focusBtn').setAttribute('aria-pressed', String(state.focus));
@@ -26,46 +14,72 @@
       get('exitFocusBtn').hidden = !state.focus;
       adapter.resizePreview();
     }
-    // Mocks do not advance elapsed time automatically. Track whether
-    // Start was used so Pause still displays Resume instead of Start.
     let started = false;
     function renderPlayback() {
-      const playing = adapter.getPlayback().running;
-      if (playing) started = true;
-      get('startBtn').disabled = playing;
-      get('stopBtn').disabled = !playing;
-      get('startBtn').querySelector('span').textContent = started && !playing ? 'Resume' : 'Start';
-      get('phaseLabel').textContent = playing ? 'Playing' : started ? 'Paused' : 'Ready';
-      get('logo').classList.toggle('playing', playing);
+      const playback = adapter.getPlayback();
+      if (playback.running) started = true;
+      get('startBtn').disabled = state.recording || playback.running;
+      get('stopBtn').disabled = state.recording || !playback.running;
+      get('resetBtn').disabled = state.recording;
+      get('startBtn').querySelector('span').textContent = started && !playback.running ? 'Resume' : 'Start';
+      get('phaseLabel').textContent = (playback.running ? 'Playing' : started ? 'Paused' : 'Ready') + ' - ' + playback.phaseName;
     }
-    // Called after resetting the engine; only resets playback labels.
     function resetPlayback() { started = false; renderPlayback(); }
-    // Validation results update feedback without replacing a valid logo
-    // with the invalid draft text. textContent avoids interpreting HTML.
     function renderWord(result) {
-      const input = get('wordInput');
-      input.setAttribute('aria-invalid', String(!result.ok));
+      get('wordInput').setAttribute('aria-invalid', String(!result.ok));
       get('wordError').textContent = result.ok ? '' : result.error;
-      get('wordCount').textContent = input.value.length + ' / 4';
-      if (result.ok) get('logo').textContent = state.renderedWord;
+      get('wordCount').textContent = get('wordInput').value.length + ' / 4';
     }
-    // Simulate colour/depth/speed for independent UI review. CSS shadows
-    // are not geometric extrusion; --duration drives mock CSS motion.
     function renderPreview() {
-      const logo = get('logo');
-      logo.textContent = state.renderedWord || 'USM';
-      logo.style.color = state.colour;
-      logo.style.setProperty('--duration', (4 / state.speed) + 's');
-      const depth = state.depth;
-      logo.style.textShadow = `${depth * 2}px ${depth * 3}px #4e69a2, ${depth * 4}px ${depth * 6}px #3b5081, 7px 10px 20px #0008`;
-      get('colourValue').textContent = state.colour.toUpperCase();
+      get('previewCaption').textContent = state.renderedWord + ' - real-time WebGL';
       get('depthValue').textContent = state.depth.toFixed(1);
-      get('speedValue').textContent = state.speed.toFixed(1) + '×';
+      get('depthSlider').value = state.depth;
+      get('speedValue').textContent = state.speed.toFixed(1) + 'x';
     }
-    // Paint initial values and expose cleanup for later teardown.
+    // Picker values come from validated session settings; labels are fixed or validated letters.
+    function renderColours() {
+      const settings = state.colours, mode = settings.mode, value = settings[mode];
+      get('colourMode').value = mode;
+      get('paletteSelect').value = value.palette;
+      const picker = (label, field, colour, index = '') => `<div class="colour-picker"><label for="pick-${field}-${index}">${label}</label><input id="pick-${field}-${index}" type="color" data-field="${field}" data-index="${index}" value="${colour}"></div>`;
+      let html = '';
+      if (mode === 'single') html = picker('Logo colour', 'colour', value.colour);
+      if (mode === 'faces') html = picker('Front', 'front', value.front) + picker('Sides and back', 'side', value.side);
+      if (mode === 'letters') html = [...state.renderedWord].map((letter, i) => picker(`Letter ${i + 1}: ${letter}`, 'colours', value.colours[i], i)).join('');
+      if (mode === 'gradient') {
+        html = value.colours.map((colour, i) => picker(`Stop ${i + 1}`, 'colours', colour, i)).join('');
+        html += `<button type="button" data-action="add" ${value.colours.length === 4 ? 'disabled' : ''}>Add stop</button><button type="button" data-action="remove" ${value.colours.length === 2 ? 'disabled' : ''}>Remove last stop</button>
+          <label for="directionPreset">Direction</label><select id="directionPreset"><option>Horizontal</option><option>Vertical</option><option>Diagonal</option><option>Custom</option></select>
+          <label for="gradientAngle">Angle <output id="angleValue">${value.angle} degrees</output></label><input id="gradientAngle" type="range" min="0" max="360" value="${value.angle}">
+          <p class="helper">Object directions: 0 degrees left to right, 90 bottom to top, 45 diagonal. Stops are equally spaced.</p>
+          <label for="gradientCoverage">Coverage</label><select id="gradientCoverage"><option value="word">Whole word</option><option value="letter">Each letter</option></select>
+          <label for="gradientSurface">Surface</label><select id="gradientSurface"><option value="all">All faces</option><option value="front">Front only</option></select>`;
+        if (value.surface === 'front') html += picker('Sides and back', 'side', value.side);
+      }
+      get('colourFields').innerHTML = html;
+      if (mode === 'gradient') {
+        get('directionPreset').value = value.direction;
+        get('gradientCoverage').value = value.coverage;
+        get('gradientSurface').value = value.surface;
+      }
+    }
+    function renderGraphics() {
+      get('projectionSelect').value = state.projection;
+      get('lightPreset').value = state.lightPreset;
+      ['horizontal', 'vertical', 'intensity'].forEach(key => {
+        const id = 'light' + key[0].toUpperCase() + key.slice(1);
+        get(id).value = state.light[key]; get(id + 'Value').textContent = state.light[key];
+      });
+      get('materialPreset').value = state.material;
+      const material = state.materials[state.material];
+      get('shininessSlider').value = material.shininess;
+      get('shininessValue').textContent = material.shininess;
+      get('specularSlider').value = material.specularIntensity;
+      get('specularValue').textContent = material.specularIntensity;
+    }
     const unsubscribe = adapter.subscribePlayback(renderPlayback);
-    renderLayout(); renderPlayback(); renderPreview();
-    return { renderLayout, renderPlayback, resetPlayback, renderWord, renderPreview, dispose: unsubscribe };
+    renderLayout(); renderPlayback(); renderPreview(); renderColours(); renderGraphics();
+    return { renderLayout, renderPlayback, resetPlayback, renderWord, renderPreview, renderColours, renderGraphics, dispose: unsubscribe };
   }
   M5.initControls = initControls;
 })(window);

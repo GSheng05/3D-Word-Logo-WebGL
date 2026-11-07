@@ -12,15 +12,19 @@ var trackedCanvas = null;
 var trackedGl = null;
 var canvasAspect = 1;
 var captureSize = null; // {width, height} while recording, otherwise null
+var resizeCallback = null;
 var START_FILL = 0.4; // share of the screen the logo fills at the start
 var FULL_FILL = 0.9; // share it fills after "scale up"
 
 // Makes the canvas draw this many pixels, and tells WebGL to use all of them.
 function setDrawingSize(width, height) {
-    trackedCanvas.width = Math.max(1, width);
-    trackedCanvas.height = Math.max(1, height);
+    var nextWidth = Math.max(1, width);
+    var nextHeight = Math.max(1, height);
+    if (trackedCanvas.width !== nextWidth) trackedCanvas.width = nextWidth;
+    if (trackedCanvas.height !== nextHeight) trackedCanvas.height = nextHeight;
     trackedGl.viewport(0, 0, trackedCanvas.width, trackedCanvas.height);
     canvasAspect = trackedCanvas.width / trackedCanvas.height;
+    if (resizeCallback) resizeCallback();
 }
 
 // Matches the drawing size to the size on the page
@@ -35,11 +39,17 @@ function resizePreview() {
 }
 
 // Call once at startup, After that, any size change is handled by itself
-function initResize(canvas, gl) {
+function initResize(canvas, gl, onResize) {
     trackedCanvas = canvas;
     trackedGl = gl;
-    new ResizeObserver(resizePreview).observe(canvas);
+    resizeCallback = onResize || null;
+    var observer = new ResizeObserver(resizePreview);
+    observer.observe(canvas);
     resizePreview();
+    return function () {
+        observer.disconnect();
+        resizeCallback = null;
+    };
 }
 
 // For getProjectionMatrix(aspect)

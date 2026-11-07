@@ -1,310 +1,243 @@
 <!doctype html>
 <html lang="en">
-
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Logo Studio — M5 preview</title>
-  <link rel="stylesheet" href="styles/style.css">
-  <style>
-    #stage {
-      position: relative;
-    }
-
-    #logo-canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logo Studio</title>
+<link rel="stylesheet" href="styles/style.css">
 </head>
-
 <body>
-  <div class="app" id="app">
-    <header class="topbar">
-      <div class="brand">
-        <span class="brand-icon">◈</span>
-
-        <div>
-          <strong>Logo Studio</strong>
-          <small>CPC354 · 3D Word Logo</small>
-        </div>
-      </div>
-
-      <div class="top-actions">
-        <span class="badge">M5 mock preview</span>
-
-        <button id="focusBtn" class="icon-button" type="button" aria-pressed="false">
-          Focus mode
-        </button>
-
-        <button id="sidebarBtn" class="icon-button" type="button" aria-controls="sidebar" aria-expanded="true">
-          Hide settings
-        </button>
-      </div>
-    </header>
-
-    <main class="workspace">
-      <section class="preview" aria-label="Logo preview">
-        <div class="preview-top">
-          <div>
-            <span class="eyebrow">YOUR PREVIEW</span>
-            <h1>Make it yours.</h1>
-            <p>Adjust your logo in real time.</p>
-          </div>
-
-          <span class="preview-status">
-            <i></i> Mock preview
-          </span>
-        </div>
-
-        <div class="stage" id="stage">
-          <canvas id="logo-canvas" aria-label="3D word logo preview">
-          </canvas>
-
-          <div class="stage-glow"></div>
-
-          <div class="logo" id="logo" aria-label="Mock logo preview">USM</div>
-
-          <div class="stage-caption">
-            Interface preview · WebGL integration pending
-          </div>
-        </div>
-
-        <div class="playback" aria-label="Playback controls">
-          <button type="button" id="startBtn" class="play-button">
-            ▶ <span>Start</span>
-          </button>
-
-          <button type="button" id="stopBtn">
-            Ⅱ <span>Pause</span>
-          </button>
-
-          <button type="button" id="resetBtn">
-            ↺ <span>Reset</span>
-          </button>
-
-          <span class="playback-divider"></span>
-          <span id="phaseLabel" class="playback-status">Ready</span>
-        </div>
-
-        <p class="shortcuts">
-          SPACE <span>play / pause</span>　
-          R <span>reset</span>　
-          F <span>focus</span>　
-          H <span>settings</span>
-        </p>
-      </section>
-
-      <aside class="sidebar" id="sidebar" aria-label="Logo settings">
-
-        <div class="sidebar-heading">
-          <div>
-            <span class="eyebrow">STUDIO CONTROLS</span>
-            <h2>Settings</h2>
-          </div>
-
-          <span class="settings-mark">✳</span>
-        </div>
-
-        <p class="sidebar-intro">
-          Shape the look and feel of your logo.
-        </p>
-
-        <!-- Existing M5 logo controls -->
-        <details open>
-          <summary>
-            <span><b>01</b> Logo</span>
-          </summary>
-
-          <div class="section-content">
-            <label for="wordInput">
-              Your word <span class="hint">2–4 letters</span>
-            </label>
-
-            <input id="wordInput" type="text" value="USM" autocomplete="off" spellcheck="false"
-              aria-describedby="wordError wordHint">
-
-            <div class="input-footer">
-              <span id="wordHint">Letters A–Z only</span>
-              <span id="wordCount">3 / 4</span>
-            </div>
-
-            <p id="wordError" class="error" role="alert"></p>
-
-            <label for="depthSlider">
-              Extrusion depth
-              <output id="depthValue">1.0</output>
-            </label>
-
-            <input id="depthSlider" type="range" min="0.2" max="3" step="0.1" value="1">
-
-            <div class="range-labels">
-              <span>Thin</span>
-              <span>Deep</span>
-            </div>
-          </div>
-        </details>
-
-        <details open>
-          <summary>
-            <span><b>02</b> Colour</span>
-          </summary>
-
-          <div class="section-content">
-            <label for="colourInput">
-              Logo colour <span class="hint">Single colour</span>
-            </label>
-
-            <div class="colour-row">
-              <input id="colourInput" type="color" value="#80a8ff">
-
-              <span id="colourValue">#80A8FF</span>
-              <span class="colour-tag">CUSTOM</span>
-            </div>
-
-            <p class="helper">
-              More colour modes will be added in the next phase.
-            </p>
-          </div>
-        </details>
-
-        <details>
-          <summary>
-            <span><b>03</b> Camera</span>
-            <em>Later</em>
-          </summary>
-
-          <div class="section-content">
-            <p class="helper">
-              Projection controls will be available after camera integration.
-            </p>
-          </div>
-        </details>
-
-        <details>
-          <summary>
-            <span><b>04</b> Lighting &amp; material</span>
-            <em>Later</em>
-          </summary>
-
-          <div class="section-content">
-            <p class="helper">
-              Lighting, materials and shadows will be available after
-              renderer integration.
-            </p>
-          </div>
-        </details>
-
-        <details open>
-          <summary>
-            <span><b>05</b> Animation</span>
-          </summary>
-
-          <div class="section-content">
-            <label for="speedSlider">
-              Animation speed
-              <output id="speedValue">1.0×</output>
-            </label>
-
-            <input id="speedSlider" type="range" min="0.5" max="2" step="0.1" value="1">
-
-            <div class="range-labels">
-              <span>Slower</span>
-              <span>Faster</span>
-            </div>
-
-            <p class="helper">
-              Preview motion is simulated until the animation engine is connected.
-            </p>
-          </div>
-        </details>
-
-        <details>
-          <summary>
-            <span><b>06</b> Export</span>
-            <em>Later</em>
-          </summary>
-
-          <div class="section-content">
-            <p class="helper">
-              Video export will be available after recording integration.
-            </p>
-          </div>
-        </details>
-
-        <div class="sidebar-footer">
-          Made for your next big ident <span>✦</span>
-        </div>
-      </aside>
-    </main>
-
-    <button id="restoreSidebarBtn" class="restore-button" type="button" hidden>
-      ☰ &nbsp; Show settings
-    </button>
-
-    <button id="exitFocusBtn" class="exit-focus" type="button" hidden>
-      Exit focus mode
-    </button>
-
-    <div id="statusMessage" class="sr-only" role="status" aria-live="polite">
-    </div>
-  </div>
-
-  <!-- Matrix helpers must load before the renderer draws a frame. -->
-  <script src="Common/MV.js"></script>
-
-  <script src="src/rendering/shaders.js"></script>
-  <script src="src/rendering/buffers.js"></script>
-  <script src="src/rendering/lighting.js"></script>
-  <script src="src/rendering/webgl.js"></script>
-
-  <script src="src/ui/adapter.js"></script>
-  <script src="src/ui/mocks.js"></script>
-  <script src="src/ui/state.js"></script>
-  <script src="src/ui/controls.js"></script>
-  <script src="src/ui/events.js"></script>
-
-  <!-- M2 ADDITION 5: temporary Phase 1 startup.
-       Move this initialization to the shared main.js during integration.
-       Do not retain two initialization calls. -->
-  <script>
-    (function () {
-      'use strict';
-
-      function startRenderer() {
-        try {
-          // Retain the instance for future integration and cleanup.
-          M2.renderer = M2.webgl.initialize(
-            document.getElementById('logo-canvas')
-          );
-
-          M2.renderer.clear();
-        } catch (error) {
-          console.error('M2 initialization failed:', error);
-
-          const status = document.getElementById('statusMessage');
-
-          if (status) {
-            status.textContent = error.message;
-          }
-        }
-      }
-
-      // Initialize only after the required HTML elements exist.
-      if (document.readyState === 'loading') {
-        document.addEventListener(
-          'DOMContentLoaded',
-          startRenderer,
-          { once: true }
-        );
-      } else {
-        startRenderer();
-      }
-    })();
-  </script>
+<div class="app" id="app">
+<header class="topbar">
+<div class="brand">
+<span class="brand-icon">3D</span>
+<div>
+<strong>Logo Studio</strong>
+<small>CPC354 - 3D Word Logo</small>
+</div>
+</div>
+<div class="top-actions">
+<span class="badge">WebGL Studio</span>
+<button id="focusBtn" class="icon-button" aria-pressed="false">Focus mode</button>
+<button id="sidebarBtn" class="icon-button" aria-controls="sidebar" aria-expanded="true">Hide settings</button>
+</div>
+</header>
+<main class="workspace">
+<section class="preview" aria-label="Logo preview">
+<div class="preview-top">
+<div>
+<span class="eyebrow">YOUR PREVIEW</span>
+<h1>Make it yours.</h1>
+<p>Adjust your logo in real time.</p>
+</div>
+<span class="preview-status" id="rendererStatus">WebGL</span>
+</div>
+<div class="stage" id="stage">
+<div class="stage-glow">
+</div>
+<canvas id="logo-canvas" aria-label="Animated 3D word logo">
+</canvas>
+<div class="stage-caption" id="previewCaption">
+</div>
+</div>
+<div class="playback" aria-label="Playback controls">
+<button id="startBtn" class="play-button">
+<span>Start</span>
+</button>
+<button id="stopBtn">
+<span>Pause</span>
+</button>
+<button id="resetBtn">
+<span>Reset</span>
+</button>
+<span id="phaseLabel" class="playback-status">Ready</span>
+</div>
+<p class="shortcuts">SPACE <span>play / pause</span> R <span>reset</span> F <span>focus</span> H <span>settings</span>
+</p>
+</section>
+<aside class="sidebar" id="sidebar" aria-label="Logo settings">
+<div class="sidebar-heading">
+<div>
+<span class="eyebrow">STUDIO CONTROLS</span>
+<h2>Settings</h2>
+</div>
+</div>
+<details open>
+<summary>
+<span>
+<b>01</b> Logo</span>
+</summary>
+<div class="section-content">
+<label for="wordInput">Your word <span class="hint">2-4 letters</span>
+</label>
+<input id="wordInput" type="text" value="USM" autocomplete="off" spellcheck="false" aria-describedby="wordError wordHint">
+<div class="input-footer">
+<span id="wordHint">Letters A-Z only</span>
+<span id="wordCount">3 / 4</span>
+</div>
+<p id="wordError" class="error" role="alert">
+</p>
+<label for="depthSlider">Extrusion depth <output id="depthValue">
+</output>
+</label>
+<input id="depthSlider" type="range" min="0.2" max="3" step="0.1" value="1">
+</div>
+</details>
+<details open>
+<summary>
+<span>
+<b>02</b> Colour</span>
+</summary>
+<div class="section-content">
+<label for="colourMode">Colour mode</label>
+<select id="colourMode">
+<option value="single">Single Colour</option>
+<option value="faces">Front / Side</option>
+<option value="letters">Per-Letter</option>
+<option value="gradient">Gradient</option>
+</select>
+<label for="paletteSelect">Palette</label>
+<select id="paletteSelect">
+<option>Custom</option>
+<option>Ocean</option>
+<option>Sunset</option>
+<option>Forest</option>
+</select>
+<div id="colourFields">
+</div>
+</div>
+</details>
+<details>
+<summary>
+<span>
+<b>03</b> Camera</span>
+</summary>
+<div class="section-content">
+<label for="projectionSelect">Projection</label>
+<select id="projectionSelect">
+<option value="perspective">Perspective</option>
+<option value="orthographic">Orthographic</option>
+</select>
+</div>
+</details>
+<details>
+<summary>
+<span>
+<b>04</b> Lighting &amp; material</span>
+</summary>
+<div class="section-content">
+<label for="lightPreset">Light direction</label>
+<select id="lightPreset">
+<option>Top Left</option>
+<option>Top Right</option>
+<option>Front</option>
+<option>Back</option>
+<option>Above</option>
+<option>Custom</option>
+</select>
+<label for="lightHorizontal">Horizontal <output id="lightHorizontalValue">
+</output>
+</label>
+<input id="lightHorizontal" type="range" min="-180" max="180" value="-45">
+<label for="lightVertical">Vertical <output id="lightVerticalValue">
+</output>
+</label>
+<input id="lightVertical" type="range" min="-90" max="90" value="35">
+<label for="lightIntensity">Intensity <output id="lightIntensityValue">
+</output>
+</label>
+<input id="lightIntensity" type="range" min="0" max="1" step="0.01" value="1">
+<label for="materialPreset">Material</label>
+<select id="materialPreset">
+<option>Matte</option>
+<option>Glossy</option>
+<option>Metallic</option>
+</select>
+<label for="shininessSlider">Shininess <output id="shininessValue">
+</output>
+</label>
+<input id="shininessSlider" type="range" min="1" max="128" value="8">
+<label for="specularSlider">Specular intensity <output id="specularValue">
+</output>
+</label>
+<input id="specularSlider" type="range" min="0" max="1" step="0.01" value="0">
+<button id="materialReset" type="button">Reset this material</button>
+<p class="helper">Each material remembers your adjustments for this session. Shadows are not yet available.</p>
+</div>
+</details>
+<details open>
+<summary>
+<span>
+<b>05</b> Animation</span>
+</summary>
+<div class="section-content">
+<label for="speedSlider">Animation speed <output id="speedValue">
+</output>
+</label>
+<input id="speedSlider" type="range" min="0.5" max="2" step="0.1" value="1">
+</div>
+</details>
+<details>
+<summary>
+<span>
+<b>06</b> Export</span>
+</summary>
+<div class="section-content">
+<label for="recordResolution">Video resolution</label>
+<select id="recordResolution"><option value="720">720p (1280 x 720)</option><option value="1080">1080p (1920 x 1080)</option></select>
+<button id="recordStart" type="button">Record from start</button>
+<button id="recordStop" type="button" disabled>Stop recording</button>
+<button id="recordCancel" type="button" disabled>Cancel</button>
+<p id="recordStatus" role="status" aria-live="polite">Checking recording support...</p>
+<a id="recordDownload" class="video-download" hidden>Download video</a>
+<p class="helper">Records the logo on a solid dark background, without audio, at a target of 30 fps. Recording restarts the animation and pauses it when finished. Scene controls are locked during recording. Stops automatically after 60 seconds. Keep this tab visible while recording.</p>
+</div>
+</details>
+</aside>
+</main>
+<button id="restoreSidebarBtn" class="restore-button" hidden>Show settings</button>
+<button id="exitFocusBtn" class="exit-focus" hidden>Exit focus mode</button>
+<div id="statusMessage" class="studio-status" role="status" aria-live="polite">
+</div>
+</div>
+<script src="Common/MV.js">
+</script>
+<script src="src/geometry/font.js">
+</script>
+<script src="src/geometry/cube.js">
+</script>
+<script src="src/geometry/word.js">
+</script>
+<script src="src/rendering/shaders.js">
+</script>
+<script src="src/rendering/buffers.js">
+</script>
+<script src="src/rendering/lighting.js">
+</script>
+<script src="src/rendering/webgl.js">
+</script>
+<script src="src/animation/phases.js">
+</script>
+<script src="src/animation/animation.js">
+</script>
+<script src="src/graphics/camera.js">
+</script>
+<script src="src/graphics/projection.js">
+</script>
+<script src="src/graphics/resize.js">
+</script>
+<script src="src/ui/colors.js">
+</script>
+<script src="src/ui/adapter.js">
+</script>
+<script src="src/ui/state.js">
+</script>
+<script src="src/ui/controls.js">
+</script>
+<script src="src/ui/events.js">
+</script>
+<script src="src/ui/recorder.js"></script>
+<script src="src/main.js">
+</script>
 </body>
-
 </html>

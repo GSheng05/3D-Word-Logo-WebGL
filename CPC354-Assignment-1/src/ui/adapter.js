@@ -18,8 +18,7 @@
       if (!has(name)) throw new Error(name + ' is unavailable.');
       return bindings[name](...args);
     };
-    // Notifies subscribers after playback actions made through this adapter.
-    // Engine-driven phase changes do not emit notifications here.
+    // Notifies subscribers after playback actions and optional frame updates.
     const listeners = new Set();
     const notify = () => listeners.forEach(listener => listener(adapter.getPlayback()));
     const adapter = {
@@ -62,8 +61,13 @@
       setShadow: value => call('setShadow', value),
       beginCaptureSize: (width, height) => call('beginCaptureSize', width, height),
       // Return cleanup so a disposed UI stops receiving notifications.
-      subscribePlayback: listener => { listeners.add(listener); return () => listeners.delete(listener); }
+      subscribePlayback: listener => { listeners.add(listener); return () => listeners.delete(listener); },
+      dispose: () => {
+        if (has('setFrameCallback')) bindings.setFrameCallback(null);
+        listeners.clear();
+      }
     };
+    if (has('setFrameCallback')) bindings.setFrameCallback(notify);
     return adapter;
   }
   // Exports functions for Node tests and the browser's M5 namespace.

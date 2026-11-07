@@ -52,7 +52,8 @@ function animate(now) {
     requestRender();
     if (frameFunction) frameFunction();
 
-    frameId = requestAnimationFrame(animate);
+    // A render/frame callback can pause playback after a drawing error.
+    if (running) frameId = requestAnimationFrame(animate);
 }
 
 // lastTime is reset so the time spent paused is not counted as one huge frame.
