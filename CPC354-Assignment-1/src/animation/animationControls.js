@@ -1,120 +1,81 @@
-// =============================================================
-// animationControls.js — Start / Stop / Reset, speed and keys
-// -------------------------------------------------------------
-// Connects the HTML controls to the animation engine and keeps the
-// buttons and labels in sync with its state. Missing elements are
-// skipped, so the page still works if a control is left out.
-//
-// Keyboard:  Space = start / pause    R = reset
-//            + / -  = faster / slower
-//
+// animationControls.js — Buttons, speed slider and keyboard shortcuts.
 // Depends on: animation.js, phases.js
-// =============================================================
+// The page needs: startBtn, stopBtn, resetBtn, speedSlider, speedValue, phaseLabel
+//
+// Only for animation_test.html and test/animation-test.html. index.html has its own
+// controls in src/ui, so it must not load this file or call initAnimationControls().
 
-// Element ids expected in index.html.
-var ANIM_UI_IDS = {
-    start:      "startBtn",
-    stop:       "stopBtn",
-    reset:      "resetBtn",
-    speed:      "speedSlider",
-    speedLabel: "speedValue",
-    phaseLabel: "phaseLabel"
-};
-
-function animEl(key) {
-    return document.getElementById(ANIM_UI_IDS[key]);
-}
-
-// Wire up all animation controls. Call once from main.js after the page loads.
 function initAnimationControls() {
-    bindButton(animEl("start"), startAnimation);
-    bindButton(animEl("stop"),  stopAnimation);
-    bindButton(animEl("reset"), resetAnimation);
-
-    var slider = animEl("speed");
-    if (slider) {
-        // "input" fires continuously while dragging, so speed changes live.
-        slider.addEventListener("input", function () {
-            setAnimationSpeed(Number(slider.value));
-            updateAnimationUI();
-        });
-        setAnimationSpeed(Number(slider.value));   // pick up the initial slider value
-    }
-
-    setPhaseChangeCallback(updateAnimationUI);
-    document.addEventListener("keydown", handleAnimationKeys);
-    updateAnimationUI();
-}
-
-// Run an animation action on click, then refresh the UI. The button is
-// blurred afterwards so a later Space press goes to our shortcut instead
-// of "clicking" the focused button a second time.
-function bindButton(button, action) {
-    if (!button) return;
-    button.addEventListener("click", function () {
-        action();
+    // blur() takes focus off the button, so a later Space press goes to our
+    // shortcut instead of clicking the same button again.
+    document.getElementById("startBtn").onclick = function () {
+        startAnimation();
         updateAnimationUI();
-        button.blur();
-    });
-}
+        this.blur();
+    };
+    document.getElementById("stopBtn").onclick = function () {
+        stopAnimation();
+        updateAnimationUI();
+        this.blur();
+    };
+    document.getElementById("resetBtn").onclick = function () {
+        resetAnimation();
+        updateAnimationUI();
+        this.blur();
+    };
 
-function handleAnimationKeys(e) {
-    // Do not steal keys while the user is typing or adjusting a form control.
-    var tag = e.target.tagName;
-    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    var slider = document.getElementById("speedSlider");
+    slider.oninput = function () {
+        setAnimationSpeed(slider.value);
+        updateAnimationUI();
+    };
+    setAnimationSpeed(slider.value);
 
-    switch (e.key) {
-        case " ":
-            e.preventDefault();   // stop Space from scrolling the page
-            if (isAnimationRunning()) stopAnimation(); else startAnimation();
-            break;
-        case "r":
-        case "R":
-            resetAnimation();
-            break;
-        case "+":
-        case "=":
-            nudgeSpeed(+1);
-            break;
-        case "-":
-            nudgeSpeed(-1);
-            break;
-        default:
-            return;
-    }
+    setFrameCallback(updateAnimationUI);
+    window.addEventListener("keydown", handleKeys);
     updateAnimationUI();
 }
 
-// Move the speed slider one step up or down and apply it.
-function nudgeSpeed(direction) {
-    var slider = animEl("speed");
-    if (!slider) return;
-    if (direction > 0) slider.stepUp(); else slider.stepDown();
-    setAnimationSpeed(Number(slider.value));
+function handleKeys(event) {
+    if (event.target.tagName === "INPUT") return;   // don't steal keys from text boxes or the slider
+
+    var slider = document.getElementById("speedSlider");
+
+    if (event.key === " ") {
+        event.preventDefault();   // stop Space from scrolling the page
+        if (running) stopAnimation();
+        else         startAnimation();
+    }
+    else if (event.key === "r" || event.key === "R") {
+        resetAnimation();
+    }
+    else if (event.key === "+" || event.key === "=") {
+        slider.stepUp();
+        setAnimationSpeed(slider.value);
+    }
+    else if (event.key === "-") {
+        slider.stepDown();
+        setAnimationSpeed(slider.value);
+    }
+
+    updateAnimationUI();
 }
 
-// Refresh button states and labels from the engine's current state.
 function updateAnimationUI() {
-    var state   = getAnimationState();
-    var started = state.elapsed > 0;
+    var started = time > 0;
 
-    var startBtn = animEl("start");
-    if (startBtn) {
-        startBtn.disabled    = state.running;
-        startBtn.textContent = (started && !state.running) ? "Resume" : "Start";
-    }
+    var startBtn = document.getElementById("startBtn");
+    startBtn.disabled = running;
+    if (started && !running) startBtn.textContent = "Resume";
+    else                     startBtn.textContent = "Start";
 
-    var stopBtn = animEl("stop");
-    if (stopBtn) stopBtn.disabled = !state.running;
+    document.getElementById("stopBtn").disabled = !running;
 
-    var speedLabel = animEl("speedLabel");
-    if (speedLabel) speedLabel.textContent = state.speedFactor.toFixed(2) + "×";
+    document.getElementById("speedValue").textContent = speed.toFixed(2) + "×";
 
-    var phaseLabel = animEl("phaseLabel");
-    if (phaseLabel) {
-        var phase = (state.transform.phaseIndex + 1) + "/" + PHASES.length + " – " + state.transform.phaseName;
-        if (!started)            phaseLabel.textContent = "Ready";
-        else if (state.running)  phaseLabel.textContent = phase;
-        else                     phaseLabel.textContent = "Paused – " + phase;
-    }
+    var phaseText = (phase + 1) + "/" + phaseNames.length + " – " + phaseNames[phase];
+    var phaseLabel = document.getElementById("phaseLabel");
+    if (!started)     phaseLabel.textContent = "Ready";
+    else if (running) phaseLabel.textContent = phaseText;
+    else              phaseLabel.textContent = "Paused – " + phaseText;
 }

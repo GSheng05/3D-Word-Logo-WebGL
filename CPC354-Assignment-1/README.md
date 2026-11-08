@@ -8,7 +8,7 @@
 
 - **Status:** M1 geometry implementation is complete at module level; the final application is not integrated.
 - **Code baseline reviewed:** [9276284](https://github.com/GSheng05/3D-Word-Logo-WebGL/commit/927628461446ef33c77475b3f1a195203c71071f).
-- **Latest handoff:** M1 implementation and review → M2 rendering, with M3 camera coordination.
+- **Latest handoff:** M4 animation fixes → M3 enlargement target and application integration (see the handoff log).
 - **Next concrete milestone:** render the real centred word through the production renderer, using bounds-based camera framing, then connect the existing animation engine.
 - This snapshot reflects the baseline above. Check newer commits before treating any status below as current.
 - Assignment PDFs and last year's reference ZIP were supplied outside this repository. Obtain the actual assignment/rubric if needed; do not assume they exist at a particular local path.
@@ -41,13 +41,13 @@ Feature count alone does not establish a high mark; the assignment and rubric re
 | M1 | Font, block/word geometry, validation, spacing, depth, centring, bounds | Implemented and numerically tested; diagnostic demo exists | M2 consumes mesh; M3 consumes bounds; M5 consumes metadata/validation |
 | M2 | WebGL context, buffers, shaders, lighting | Production files are empty | Implement renderer and render M1's mesh |
 | M3 | Camera, projection, matrices, resizing | Production files are empty | Fit real word dimensions; agree matrix conventions and enlargement target |
-| M4 | Animation timing, phases, playback | Three modules and cube test page exist; not integrated with real word | Review sequence issue; connect render callback and model transform |
+| M4 | Animation timing, phases, playback | Three modules exist; hover now stays enlarged; animation_test.html runs them on the real word; checked in Node against the real adapter.js; not integrated into index.html | Connect render callback and model transform in the real application |
 | M5 | UI, colour palettes, backdrop, events | Production files and stylesheet are empty | Implement controls against agreed APIs; avoid duplicate playback listeners |
 | Shared | Application composition, report, videos, submission | index.html and src/main.js empty; no complete submission recorded here | Name an integration coordinator and allocate remaining deliverables |
 
 Common/MV.js and Common/initShaders.js are also empty placeholders.
 Do not infer that a dependency works simply because its file exists.
-M4's test page includes temporary math fallbacks; those do not fill the production Common files.
+M4's test page now uses the real Common/MV.js and Common/initShaders.js, with no math fallbacks.
 
 ## Run what exists
 
@@ -63,7 +63,8 @@ Use a modern Node.js release with the built-in test runner. No npm dependencies 
 Open these files directly in a WebGL-capable browser:
 
 - [Geometry lab](test/geometry-test.html): real word geometry, depth/size/spacing, horizontal rotation, face/letter colours.
-- [Animation test](test/animation-test.html): existing cube-based animation harness, not the integrated word application.
+- [Word animation](animation_test.html): M4's stand-alone page drawing the real word with M1's geometry, M3's camera and M4's animation. It has its own basic renderer and is not the integrated application.
+- [Animation test](test/animation-test.html): older cube-based animation harness, not the integrated word application.
 
 Opening index.html currently does not run a finished application. There is no application build command yet.
 
@@ -133,9 +134,9 @@ const mesh = buildWordGeometry({
 3. Start with M2's real-mesh renderer and coordinate M3's framing. Do not replace M1 with a new text-generation approach without a documented reason.
 4. For M2, use size-3 position attributes and construct vec4(position, 1.0) in the shader as needed. Transform normals consistently with the lighting coordinate space.
 5. For M3, derive camera fit from bounds and allow space for rotation/hover. Establish a separate enlargement target; do not auto-fit away the visible enlargement during animation.
-6. For M4, load phases.js before animation.js. Existing hooks include setRenderCallback(), getAnimationModelMatrix(), startAnimation(), stopAnimation(), and resetAnimation(). Inspect actual source before integration.
+6. For M4, load phases.js before animation.js. Existing hooks include setRenderCallback(), setFrameCallback(), requestRender(), getAnimationModelMatrix(), startAnimation(), stopAnimation(), resetAnimation(), setAnimationSpeed() (60 = 1x), getAnimationState(), and setMaxScale(). Inspect actual source before integration.
 7. Agree who composes the model matrix: M4 currently does it. Do not apply M3 and M4 transforms twice. Keep a single animation-frame loop.
-8. For M5, inspect animationControls.js before binding playback/speed events. Existing IDs include startBtn, stopBtn, resetBtn, speedSlider, speedValue, and phaseLabel. Bind controls once.
+8. For M5, playback and speed are bound by src/ui through adapter.js. animationControls.js is for test/animation-test.html only: index.html must not load it or call initAnimationControls(), so controls are bound once.
 9. Verify that edits while paused redraw correctly, invalid input preserves the previous mesh, resize works, and colour updates need not rebuild positions.
 10. Run relevant checks, record actual results, and update this README using the protocol below before handing off.
 
@@ -162,10 +163,10 @@ The render callback combines projection/view with the agreed model transform and
 
 ### Specification issue to resolve with M4
 
-The current phases include scale up → scale down → hover, with MAX_SCALE = 2.5.
-The instructions specify enlargement followed by looping movement. Safest default: retain the enlarged pose for the loop.
-Also replace the assumption that a fixed scale is "full-screen" with a target appropriate to word bounds and viewport.
-This issue was identified, not fixed, in M1's work.
+Fixed: the phases are now scale up → hover, and the hover stays at the enlarged size. The scale down phase was removed.
+Still open: maxScale defaults to 2.5, which is not based on the word or window.
+Replace it by calling setMaxScale() with a target appropriate to word bounds and viewport, leaving room for the hover.
+This issue was identified in M1's work; the hover part was fixed in M4's work.
 
 ## Improvement backlog — recommendations, not completed features
 
@@ -235,3 +236,14 @@ Copy this template for the next handoff:
 - Validation: checked current GitHub file inventory and relative links against repository paths.
 - No implementation improvements from the review are represented as completed.
 - Next owner: M2, in coordination with M3; first task is a production render of the default USM mesh.
+
+### Handoff: M4 animation fixes → M3 / integration
+- Code baseline / commit(s): 57ba11c plus local changes in src/animation and test/animation-test.html.
+- Completed changes and files: added animation_test.html, which draws the real word; animation code rewritten in basic style; scale down removed so the hover stays enlarged; test page rewritten in Angel style with real MV.js and initShaders.js; rotate() replaced with rotateY()/rotateX() because this MV.js rotate() turns the opposite way.
+- Interface decisions or changes: restored setAnimationSpeed() and getAnimationState() for adapter.js; added requestRender(), setFrameCallback() and setMaxScale(); removed setPhaseChangeCallback(), isAnimationRunning(), and the PHASES, MAX_SCALE and animState globals. Phase count is now 6. animation.js no longer depends on animationControls.js.
+- Verification commands and actual results: `node --check` passed on all three animation files; `node --test test/geometry.test.cjs` passed 6 of 6; ad hoc Node scripts confirmed the phase sequence, scale 2.5 throughout the hover, the real adapter.js driving play, pause, reset and speed without animationControls.js, and the test page flow on a fake DOM.
+- Browser checks / unverified behaviour: animation_test.html was rendered in headless Chrome (SwiftShader) with no WebGL errors, and screenshots of USM, TV and LOGO were checked at set animation times, including the back view and hover. A full real-time run from Start was also logged in headless Chrome: phases changed every 2 s, the hover began at 10 s at scale 2.5, and Stop, Space, +/- and R all worked. Nobody has yet judged the motion by eye on a real screen.
+- Remaining blockers and known issues: animation_test.html fits the word to its fixed 800×450 canvas with fitScale and FILL (peak 0.94 of the screen edge for TV), but the sizing is not in the real application yet; index.html does not load the animation scripts; src/main.js is empty.
+- Next owner and first concrete task: M3 moves the fitScale sizing from animation_test.html into the real application; the integration owner passes the animation functions to M5.createAdapter().
+- Report updates: AI use on the animation code must be disclosed in the AI section.
+- Repository delivery status: local only.

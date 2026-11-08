@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>M2 Phase 4 — Directional lighting preview</title>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            background: #18202a;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #error {
+            position: fixed;
+            top: 0;
+            left: 0;
+            color: white;
+            background: #8b2020;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="preview" aria-label="Real word geometry rendered by M2">
+    </canvas>
+
+    <p id="error" role="alert" hidden></p>
+
+    <!-- Existing dependencies copied unchanged from the reviewed repository. -->
+    <script src="../Common/MV.js"></script>
+    <script src="../src/geometry/font.js"></script>
+    <script src="../src/geometry/cube.js"></script>
+    <script src="../src/geometry/word.js"></script>
+    <script src="../src/ui/state.js"></script>
+
+    <script src="../src/rendering/shaders.js"></script>
+    <script src="../src/rendering/buffers.js"></script>
+    <script src="../src/rendering/lighting.js"></script>
+    <script src="../src/rendering/webgl.js"></script>
+
+    <script>
+        // Development only: this page does not replace M3's camera or M5's startup.
+        (function () {
+            'use strict';
+
+            const canvas = document.getElementById('preview');
+            const error = document.getElementById('error');
+            let renderer;
+
+            function report(problem) {
+                error.textContent = problem.message;
+                error.hidden = false;
+                console.error(problem);
+            }
+
+            try {
+                renderer = M2.webgl.initialize(canvas);
+
+                // Reuse the existing default word and single-colour setting.
+                const mesh = buildWordGeometry();
+                const settings = M5.createState();
+
+                renderer.replaceGeometry(
+                    mesh,
+                    M5.coloursFor(mesh, settings.colour)
+                );
+
+                function redraw() {
+                    try {
+                        // This test page owns its viewport. Production resizing belongs to M3.
+                        const ratio = window.devicePixelRatio || 1;
+
+                        canvas.width = Math.max(
+                            1,
+                            Math.round(canvas.clientWidth * ratio)
+                        );
+
+                        canvas.height = Math.max(
+                            1,
+                            Math.round(canvas.clientHeight * ratio)
+                        );
+
+                        renderer.gl.viewport(
+                            0,
+                            0,
+                            canvas.width,
+                            canvas.height
+                        );
+
+                        const aspect = canvas.width / canvas.height;
+                        const radius = Math.hypot(...mesh.bounds.size) / 2;
+
+                        // Development framing settings, not production camera decisions.
+                        const margin = 1.15;
+                        const halfHeight = radius * margin / Math.min(1, aspect);
+                        const halfWidth = halfHeight * aspect;
+                        const distance = radius * 3;
+
+                        renderer.draw({
+                            // Preview pose exposes the front and side faces for lighting inspection.
+                            model: rotateY(25),
+
+                            view: lookAt(
+                                vec3(0, 0, distance),
+                                vec3(0, 0, 0),
+                                vec3(0, 1, 0)
+                            ),
+
+                            projection: ortho(
+                                -halfWidth,
+                                halfWidth,
+                                -halfHeight,
+                                halfHeight,
+                                distance - radius * 2,
+                                distance + radius * 2
+                            )
+                        });
+
+                        error.hidden = true;
+                    } catch (problem) {
+                        report(problem);
+                    }
+                }
+
+                window.addEventListener('resize', redraw);
+
+                window.addEventListener('pagehide', function (event) {
+                    // Preserve resources when the browser caches the page for restoration.
+                    if (!event.persisted) {
+                        window.removeEventListener('resize', redraw);
+                        renderer.dispose();
+                    }
+                });
+
+                redraw();
+            } catch (problem) {
+                if (renderer) renderer.dispose();
+                report(problem);
+            }
+        })();
+    </script>
+</body>
+
+</html>
