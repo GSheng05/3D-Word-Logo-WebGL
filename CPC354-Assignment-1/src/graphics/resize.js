@@ -1,13 +1,10 @@
-// =============================================================
 // resize.js — Keeps the canvas drawing size equal to its size on the page (M3)
-// -------------------------------------------------------------
 // A canvas has two sizes: how big it looks on the page, and how many
 // pixels it draws. When they differ, the picture is stretched or blurry.
 //
 // Depends on: MV.js (radians), camera.js (CAMERA_EYE),
 //             projection.js (PROJ_FOVY, projectionMode)
 //             phases.js (setMaxScale, HOVER_ROTATE_DEG, HOVER_TILT_DEG, HOVER_SHIFT_X, HOVER_SHIFT_Y)
-// =============================================================
 
 var trackedCanvas = null;
 var trackedGl = null;
