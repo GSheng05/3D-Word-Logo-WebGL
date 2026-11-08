@@ -1,11 +1,8 @@
-// =============================================================
 // projection.js — How the 3D scene is flattened onto the screen (M3)
-// -------------------------------------------------------------
 // Perspective: things farther from the camera look smaller.
 // Orthographic: same size at any distance.
 //
 // Depends on: MV.js (perspective, ortho, radians), camera.js (CAMERA_EYE)
-// =============================================================
 
 var PROJ_FOVY = 45.0; // how wide the camera sees, top to bottom (degrees)
 var PROJ_NEAR = 0.1; // closer than this: not drawn
