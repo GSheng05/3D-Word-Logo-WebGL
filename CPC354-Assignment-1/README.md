@@ -6,12 +6,12 @@
 
 ## Current checkpoint
 
-- **Status:** M1 geometry implementation is complete at module level; the final application is not integrated.
-- **Code baseline reviewed:** [9276284](https://github.com/GSheng05/3D-Word-Logo-WebGL/commit/927628461446ef33c77475b3f1a195203c71071f).
-- **Latest handoff:** M4 animation fixes → M3 enlargement target and application integration (see the handoff log).
-- **Next concrete milestone:** render the real centred word through the production renderer, using bounds-based camera framing, then connect the existing animation engine.
-- This snapshot reflects the baseline above. Check newer commits before treating any status below as current.
-- Assignment PDFs and last year's reference ZIP were supplied outside this repository. Obtain the actual assignment/rubric if needed; do not assume they exist at a particular local path.
+- **Status:** Studio integrates real geometry, WebGL rendering, animation, camera controls, colours, lighting, materials and video export.
+- **Scope decision (2026-11-08):** the group cancelled cast shadows. No floor or shadow-rendering feature is planned; unused shadow adapter hooks have been removed.
+- **Verification:** the user reported successful browser checks of Studio controls and recording/export. Exact browser version and exported-file properties were not recorded.
+- **Latest handoff:** M5 integration and unused-code cleanup; see the handoff log for test results and remaining work.
+- **Next milestone:** collect report evidence and complete submission preparation. Check narrow-screen playback labels before claiming full responsive coverage.
+- Assignment PDFs and reference material were supplied outside this repository. Consult the actual brief and rubric when checking submission requirements.
 
 ## Assignment targets
 
@@ -36,37 +36,44 @@ Feature count alone does not establish a high mark; the assignment and rubric re
 
 ## Ownership and actual progress
 
-| Owner | Responsibility | Current state | Next handoff/action |
+| Owner | Responsibility | Current state | Next action |
 | --- | --- | --- | --- |
-| M1 | Font, block/word geometry, validation, spacing, depth, centring, bounds | Implemented and numerically tested; diagnostic demo exists | M2 consumes mesh; M3 consumes bounds; M5 consumes metadata/validation |
-| M2 | WebGL context, buffers, shaders, lighting | Production files are empty | Implement renderer and render M1's mesh |
-| M3 | Camera, projection, matrices, resizing | Production files are empty | Fit real word dimensions; agree matrix conventions and enlargement target |
-| M4 | Animation timing, phases, playback | Three modules exist; hover now stays enlarged; animation_test.html runs them on the real word; checked in Node against the real adapter.js; not integrated into index.html | Connect render callback and model transform in the real application |
-| M5 | UI, colour palettes, backdrop, events | Production files and stylesheet are empty | Implement controls against agreed APIs; avoid duplicate playback listeners |
-| Shared | Application composition, report, videos, submission | index.html and src/main.js empty; no complete submission recorded here | Name an integration coordinator and allocate remaining deliverables |
+| M1 | Word geometry and metadata | Bitmap block geometry, validation, bounds and face/letter IDs integrated | Maintain geometry tests and report evidence |
+| M2 | WebGL rendering, lighting and materials | Buffers, shaders and directional lighting integrated; shadows cancelled | Document actual rendering implementation |
+| M3 | Camera, projection and resizing | Projection, bounds-based fitting and fixed capture dimensions integrated | Verify framing evidence for report |
+| M4 | Animation and playback | Required rotations, enlargement and continuous hover integrated | Document phase timing and motion |
+| M5 | Studio UI, colours, events and recording | Four colour modes, gradients, remembered material settings and video export integrated | Collect UI/export evidence; check narrow layouts |
+| Shared | Startup, testing and submission | Single startup in src/main.js; user-reported browser checks passed | Complete report, videos and viva preparation |
 
-Common/MV.js and Common/initShaders.js are also empty placeholders.
-Do not infer that a dependency works simply because its file exists.
-M4's test page now uses the real Common/MV.js and Common/initShaders.js, with no math fallbacks.
+Common/MV.js supplies matrix utilities. Common/initShaders.js remains necessary for standalone animation tests. Both are external helpers documented in Common/SOURCE.md.
 
-## Run what exists
+## Run and test
 
 From the repository root:
 
-```sh
+```powershell
 cd CPC354-Assignment-1
-node --test test/geometry.test.cjs
+py -m http.server 8000
 ```
 
-Use a modern Node.js release with the built-in test runner. No npm dependencies are needed for these tests.
+Open http://localhost:8000 in a WebGL-capable browser. VS Code Live Server is another option. No build step is required.
 
-Open these files directly in a WebGL-capable browser:
+Run all automated tests from the application folder:
 
-- [Geometry lab](test/geometry-test.html): real word geometry, depth/size/spacing, horizontal rotation, face/letter colours.
-- [Word animation](animation_test.html): M4's stand-alone page drawing the real word with M1's geometry, M3's camera and M4's animation. It has its own basic renderer and is not the integrated application.
-- [Animation test](test/animation-test.html): older cube-based animation harness, not the integrated word application.
+```powershell
+node --test test/geometry.test.cjs tests/*.test.cjs
+```
 
-Opening index.html currently does not run a finished application. There is no application build command yet.
+The tests need Node.js but no npm dependencies. Test utilities are retained:
+
+- [Geometry lab](test/geometry-test.html): geometry and metadata inspection.
+- [Word animation](animation_test.html): standalone animation using real word geometry.
+- [Cube animation](test/animation-test.html): isolated animation test.
+- src/animation/animationControls.js and Common/initShaders.js support the animation test pages.
+- src/ui/mocks.js supports automated UI tests; it is not loaded by Studio.
+- coloursFor() supports the renderer diagnostic page; applyColour() is used by UI tests.
+
+Export records from the animation's beginning at 720p or 1080p, targeting 30 fps without audio on a solid dark background. Stop and Cancel are manual controls; a 60-second limit stops recording automatically. Output uses a supported WebM format or MP4 fallback. Scene controls are locked until recording finishes, and preview dimensions are restored.
 
 ## What M1 implemented
 
@@ -131,16 +138,16 @@ const mesh = buildWordGeometry({
 
 1. Read this README, the M1 guide, applicable repository instructions, and the files you will change.
 2. Inspect the latest branch and local changes. Preserve others' work and distinguish current code from plans.
-3. Start with M2's real-mesh renderer and coordinate M3's framing. Do not replace M1 with a new text-generation approach without a documented reason.
+3. Preserve the integrated renderer and bounds-based framing. Do not replace M1 with a new text-generation approach without a documented reason.
 4. For M2, use size-3 position attributes and construct vec4(position, 1.0) in the shader as needed. Transform normals consistently with the lighting coordinate space.
 5. For M3, derive camera fit from bounds and allow space for rotation/hover. Establish a separate enlargement target; do not auto-fit away the visible enlargement during animation.
 6. For M4, load phases.js before animation.js. Existing hooks include setRenderCallback(), setFrameCallback(), requestRender(), getAnimationModelMatrix(), startAnimation(), stopAnimation(), resetAnimation(), setAnimationSpeed() (60 = 1x), getAnimationState(), and setMaxScale(). Inspect actual source before integration.
 7. Agree who composes the model matrix: M4 currently does it. Do not apply M3 and M4 transforms twice. Keep a single animation-frame loop.
-8. For M5, playback and speed are bound by src/ui through adapter.js. animationControls.js is for test/animation-test.html only: index.html must not load it or call initAnimationControls(), so controls are bound once.
+8. For M5, playback and speed are bound by src/ui through adapter.js. animationControls.js is for the standalone animation test pages only: index.html must not load it or call initAnimationControls(), so controls are bound once.
 9. Verify that edits while paused redraw correctly, invalid input preserves the previous mesh, resize works, and colour updates need not rebuild positions.
 10. Run relevant checks, record actual results, and update this README using the protocol below before handing off.
 
-Suggested main.js flow: initialize renderer/controls → build mesh → upload buffers → calculate camera → register animation render callback → render initial pose.
+Integrated main.js flow: initialize renderer/controls → build mesh → upload buffers → calculate camera → register animation render callback → render initial pose.
 The render callback combines projection/view with the agreed model transform and draws the uploaded mesh.
 
 ## Verification and known gaps
@@ -152,37 +159,30 @@ The render callback combines projection/view with the agreed model transform and
 - Syntax and whitespace checks passed during implementation.
 - The tests were rerun successfully during the comparison review.
 
-### Not verified / not complete
+### Current verification and remaining work
 
-- Browser visual verification: no browser executable was available, and attempted browser downloads failed. Do not label the demo visually verified on the strength of numerical tests.
-- Final renderer, camera, UI, and application integration are not complete.
-- Automated tests do not yet directly check every occupied/empty cell's spatial placement or all metadata associations.
-- Diagnostic lighting is object-space lighting. It is not completed production lighting.
-- The diagnostic view auto-fits geometry and offers only horizontal rotation. Auto-fitting can mask apparent size changes.
-- Report-ready figures, full formal report, student-specific critique, videos, and viva preparation are outstanding.
+- The user reported successful checks of initial rendering, playback, invalid input, paused edits, colour modes, material memory, layout changes and recording/export.
+- Automated integration tests use a mock WebGL/browser boundary; they do not prove GPU appearance or encoded-video playback.
+- Narrow-screen CSS still hides playback button labels below 760px. Review this separately before taking responsive-layout report screenshots.
+- The legacy renderer diagnostic page loads state.js without colors.js; review its dependencies before using it as report evidence.
+- Report figures, the complete report, presentation videos and viva preparation still need completion.
 
-### Specification issue to resolve with M4
+### Animation fitting
 
-Fixed: the phases are now scale up → hover, and the hover stays at the enlarged size. The scale down phase was removed.
-Still open: maxScale defaults to 2.5, which is not based on the word or window.
-Replace it by calling setMaxScale() with a target appropriate to word bounds and viewport, leaving room for the hover.
-This issue was identified in M1's work; the hover part was fixed in M4's work.
+The production render callback uses updateFit() to calculate the starting size and setMaxScale() to set the enlargement target from word bounds and viewport. The animation remains enlarged during its final hover phase.
 
-## Improvement backlog — recommendations, not completed features
+## Remaining backlog
 
 | Priority | Task | Owner |
 | --- | --- | --- |
-| High | Integrate real mesh with renderer and bounds-based framing | M2 + M3 + coordinator |
-| High | Real-browser checks, including edits while paused and resizing | Relevant owners |
-| High | Review animation sequence and enlargement target | M4 + M3 |
-| Medium | Auto-fit toggle, Fit view button, vertical rotation/view presets in diagnostic lab | M1 |
-| Medium | Exact cell-placement and metadata association tests | M1 |
-| Medium | Explicit blockIds if M5 needs per-block palettes | M1 + M5 |
-| Later | Remove hidden shared faces; update count expectations and verify exterior | M1 |
-| Optional | Digits, block gutters, extra visual styles | Coordinate scope first |
+| High | Correct and visually verify narrow-screen playback labels | M5 |
+| High | Capture original screenshots, diagrams and export evidence | All members |
+| High | Complete report, AI disclosure, videos and viva preparation | All members |
+| Medium | Review standalone renderer diagnostic dependencies | M2 + M5 |
+| Medium | Extend geometry tests for exact cell placement and metadata | M1 |
+| Optional | Remove hidden internal faces after profiling and validation | M1 |
 
-For the current font and default spacing, removing shared faces within letters would reduce USM from 576 to 428 triangles and LOGO from 720 to 532.
-These are calculated counts, not measured performance gains. Optimisation is not a prerequisite for integration.
+Shadows and a separate backdrop module are outside the current scope. Decorative CSS panel shadows remain part of the UI.
 
 ## Report and authorship handoff
 
@@ -247,3 +247,14 @@ Copy this template for the next handoff:
 - Next owner and first concrete task: M3 moves the fitScale sizing from animation_test.html into the real application; the integration owner passes the animation functions to M5.createAdapter().
 - Report updates: AI use on the animation code must be disclosed in the AI section.
 - Repository delivery status: local only.
+
+### Handoff: M5 cleanup - 2026-11-08
+- Removed the empty, unreferenced src/graphics/transforms.js file.
+- Removed unused setShadow, shadowOpacity and shadowSoftness adapter entries and the pending-shadow UI message following the group's cancellation decision.
+- Removed obsolete mock-logo animation and unused colour-row, footer, marker, divider, sidebar-intro and status-dot styles. Kept decorative UI box shadows.
+- Retained test utilities, diagnostic pages and externally sourced Common helpers.
+- Updated current progress, ownership, run instructions and remaining work; preserved earlier handoff entries as history.
+- Verification from repository root: node --test CPC354-Assignment-1/test/geometry.test.cjs CPC354-Assignment-1/tests/*.test.cjs passed all 33 tests.
+- No new browser verification was performed. Earlier Studio and export checks were reported successful by the user.
+- Next: M5 checks narrow-screen playback labels; relevant owners collect report evidence. Review renderer diagnostic dependencies before using that page.
+- Delivery: local changes only; no commit or push performed for this cleanup.

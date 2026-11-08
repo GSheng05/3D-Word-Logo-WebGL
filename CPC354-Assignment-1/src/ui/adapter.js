@@ -17,8 +17,7 @@
       capabilities: Object.freeze({
         renderer: !!bindings.realRenderer,
         projection: has('setProjection'), lighting: has('setLight'),
-        material: has('setMaterial'), shadowOpacity: has('setShadow'),
-        shadowSoftness: !!bindings.shadowSoftness,
+        material: has('setMaterial'),
         captureResize: has('beginCaptureSize'), introBoundary: has('isIntroComplete')
       }),
       buildGeometry: options => call('buildWordGeometry', options),
@@ -48,7 +47,6 @@
       resizePreview: () => has('resizePreview') ? bindings.resizePreview() : undefined,
       setLight: value => call('setLight', value),
       setMaterial: value => call('setMaterial', value),
-      setShadow: value => call('setShadow', value),
       beginCaptureSize: (width, height) => call('beginCaptureSize', width, height),
       // Return a function that removes this playback listener.
       subscribePlayback: listener => { listeners.add(listener); return () => listeners.delete(listener); },

@@ -23,28 +23,19 @@ button:focus-visible,input:focus-visible,summary:focus-visible { outline:2px sol
 .preview h1 { font-size:28px; margin:8px 0 4px; letter-spacing:-.04em }
 .preview p { margin:0; color:#8a92a5; font-size:13px }
 .preview-status { height:max-content; background:#222b34; color:#a5d5c3; border-color:#344e46 }
-.preview-status i { display:inline-block; width:6px; height:6px; border-radius:50%; background:#85d2af; margin-right:5px }
 .stage { flex:1; min-height:150px; display:grid; place-items:center; position:relative; perspective:1000px; overflow:hidden }
 .stage-glow { position:absolute; width:min(54%,550px); aspect-ratio:1; border-radius:50%; background:radial-gradient(circle,#6387d833,transparent 65%) }
-.logo { position:relative; font-family:'Space Grotesk',system-ui; font-weight:700; font-size:clamp(60px,12vw,190px); letter-spacing:-.09em; color:#80a8ff; text-shadow:2px 3px #4e69a2,4px 6px #3b5081,7px 10px 20px #0008; transform:rotateY(-12deg) rotateX(5deg); transition:color .15s,text-shadow .15s }
-.logo.playing { animation:mock-motion var(--duration,4s) ease-in-out infinite alternate }
-@keyframes mock-motion {
-  to { transform:rotateY(18deg) rotateX(-4deg) translateY(-12px) }
-}
 .stage-caption { position:absolute; bottom:16px; color:#767f94; font-size:11px }
 .playback { align-self:center; display:flex; align-items:center; gap:6px; padding:7px; border:1px solid #373d4d; border-radius:14px; background:#222735; box-shadow:0 12px 30px #0003 }
 .playback button { border:0; border-radius:9px; background:transparent; color:#d5dbea; padding:10px 14px; font-size:12px }
 .playback button:disabled { opacity:.4; cursor:default }
 .playback .play-button { background:#a7bfff; color:#182138; font-weight:700 }
-.playback-divider { height:25px; width:1px; background:#414759; margin:0 7px }
 .playback-status { font-size:11px; color:#a8b1c4; min-width:70px; padding-right:8px }
 .preview .shortcuts { text-align:center; font-size:10px; letter-spacing:.04em; margin-top:15px; color:#c4cce0 }
 .shortcuts span { color:#818a9c; letter-spacing:0 }
 .sidebar { width:360px; flex:none; overflow:auto; background:#1c202c; border-left:1px solid #303544; padding:30px 25px 15px }
 .sidebar-heading { display:flex; align-items:center; justify-content:space-between }
 .sidebar-heading h2 { margin:8px 0 0; font-size:25px; letter-spacing:-.04em }
-.settings-mark { color:#a6bfff; font-size:24px }
-.sidebar-intro { color:#939aac; font-size:12px; margin:8px 0 25px }
 details { border-top:1px solid #343948 }
 details:last-of-type { border-bottom:1px solid #343948 }
 summary { list-style:none; cursor:pointer; display:flex; justify-content:space-between; align-items:center; padding:17px 0; font-size:13px; font-weight:700 }
@@ -65,12 +56,7 @@ input[aria-invalid=true] { border-color:#ee8b94 }
 .error:empty { display:none }
 output { float:right; color:#c4d1ff }
 input[type=range] { width:100%; accent-color:#a8bfff; cursor:pointer }
-.colour-row { display:flex; align-items:center; gap:10px; border:1px solid #3b4254; background:#151924; border-radius:9px; padding:7px 9px; font-size:12px }
-.colour-row input { width:30px; height:28px; border:0; background:transparent; padding:0; cursor:pointer }
-.colour-tag { margin-left:auto; color:#9aa9c8; font-size:9px }
 .helper { font-size:11px; line-height:1.5; color:#8d96aa; margin:12px 0 0 }
-.sidebar-footer { font-size:10px; color:#7e889e; padding:22px 0 }
-.sidebar-footer span { float:right; color:#a8bfff }
 .restore-button,.exit-focus { position:fixed; top:94px; right:20px; z-index:5 }
 .exit-focus { right:20px; top:20px }
 .app.is-hidden .sidebar,.app.is-focus .sidebar,.app.is-focus .topbar,.app.is-focus .preview-top,.app.is-focus .shortcuts { display:none }
