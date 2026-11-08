@@ -1,21 +1,10 @@
-// =============================================================
-// state.js - M5 session settings and safe logo updates
-// -------------------------------------------------------------
-// Word/depth edit -> build candidate mesh -> make colours -> upload
-// -> publish successful settings -> request a render.
-// An invalid draft stays in the input while the last valid logo remains.
-//
-// Public API: M5.createState(), applyWord(), applyDepth(),
-//             applyColour(), coloursFor()
-// Depends on: the adapter passed to each update function.
-// Settings live in memory only; refreshing starts a new session.
-// =============================================================
+// state.js - Stores session settings and applies validated logo changes.
+// Settings reset when the page reloads.
 (function (root) {
   'use strict';
   const colourApi = typeof module !== 'undefined' && module.exports ? require('./colors.js') : root.M5;
-  // draftWord is what the user is editing; renderedWord/mesh describe
-  // the last successful replacement. Layout flags are independent so
-  // leaving Focus Mode restores the existing sidebar preference.
+  // Keep draft input separate from the last valid logo.
+  // Store sidebar visibility independently from Focus Mode.
   function createState(config = {}) {
     return { draftWord: 'USM', renderedWord: '', depth: 1, colour: '#80a8ff', mesh: null,
       speed: 1, sidebarOpen: true, focus: false, recording: false,
@@ -25,9 +14,7 @@
       materialDefaults: JSON.parse(JSON.stringify(config.materials || {})),
       materials: JSON.parse(JSON.stringify(config.materials || {})) };
   }
-  // Convert #RRGGBB to normalized RGBA (alpha = 1). Mesh
-  // positions contain three numbers per vertex; colours contain four.
-  // Assigns the same opaque colour to every vertex.
+  // Convert a hex colour to RGBA values (0-1) for every vertex.
   function coloursFor(mesh, colour) {
     const match = /^#([0-9a-f]{6})$/i.exec(colour);
     if (!match) throw new Error('Choose a valid colour.');
@@ -36,10 +23,8 @@
     for (let i = 0; i < result.length; i += 4) result.set([...rgb, 1], i);
     return result;
   }
-  // Build and upload before publishing the new word/depth. Construction
-  // and upload errors return {ok:false,error} for UI feedback. Upload
-  // rollback is the renderer binding's responsibility; this function
-  // cannot undo a renderer that partially replaces its buffers.
+  // Build and upload the mesh before saving the new word or depth.
+  // Return errors to the UI; the renderer handles failed uploads.
   function replace(state, word, depth, adapter) {
     try {
       const mesh = adapter.buildGeometry({ word, extrusionDepth: depth });
@@ -66,7 +51,7 @@
     return applyColourSettings(state, next, adapter);
   }
 
-  // Commit settings only after the new colour buffer has uploaded successfully.
+  // Save colour settings after the buffer upload succeeds.
   function applyColourSettings(state, next, adapter) {
     try {
       const rgba = colourApi.makeColors(state.mesh, next);
@@ -80,7 +65,7 @@
     }
   }
 
-  // Send saved values with the preset because preset selection loads shader defaults.
+  // Restore this material's saved adjustments when selecting its preset.
   function applyMaterial(state, preset, changes, adapter) {
     try {
       const saved = state.materials[preset];

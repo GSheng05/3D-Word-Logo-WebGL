@@ -1,4 +1,4 @@
-// events.js - Owns Studio input listeners and releases them during teardown.
+// events.js - Handles control changes and keyboard shortcuts.
 (function (root) {
   'use strict';
   const M5 = root.M5;
@@ -36,7 +36,7 @@
     on(get('speedSlider'), 'input', event => {
       const speed = Number(event.target.value); adapter.setSpeed(speed); state.speed = speed; view.renderPreview();
     });
-    // Clone mode settings so failed uploads leave the displayed logo and saved settings intact.
+    // Edit a copy so an upload failure keeps the previous colour settings.
     function colourEdit(edit, rebuild = true) {
       const next = JSON.parse(JSON.stringify(state.colours)); edit(next);
       const result = M5.applyColourSettings(state, next, adapter); feedback(result);
@@ -111,7 +111,7 @@
     on(get('shininessSlider'), 'input', event => material(state.material, { shininess: Number(event.target.value) }));
     on(get('specularSlider'), 'input', event => material(state.material, { specularIntensity: Number(event.target.value) }));
     on(get('materialReset'), 'click', () => material(state.material, state.materialDefaults[state.material]));
-    // Preserve native editing and focused-button shortcuts.
+    // Ignore shortcuts while typing or using a focused control.
     on(doc, 'keydown', event => {
       if (event.isComposing || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
       const target = event.target;

@@ -1,29 +1,19 @@
-// =============================================================
-// adapter.js - M5 interface to geometry, rendering and playback
-// -------------------------------------------------------------
-// Routes UI operations to supplied geometry, rendering and playback functions.
-// The supplied bindings may be mock or real implementations.
-// Missing optional features are reported through capabilities.
-//
-// Public API: M5.createAdapter(bindings) -> adapter
-// Depends on: supplied bindings; no DOM or WebGL calls in this file.
-// =============================================================
+// adapter.js - Connects UI actions to geometry, rendering and animation functions.
+// Supports real implementations and test mocks.
 (function (root) {
   'use strict';
-  // Creates an adapter from named operation bindings. Calling a missing
-  // required function throws an error describing the unavailable operation.
+  // Report an error if a requested function is unavailable.
   function createAdapter(bindings) {
     const has = name => typeof bindings[name] === 'function';
     const call = (name, ...args) => {
       if (!has(name)) throw new Error(name + ' is unavailable.');
       return bindings[name](...args);
     };
-    // Notifies subscribers after playback actions and optional frame updates.
+    // Refresh listeners after playback changes or animation frames.
     const listeners = new Set();
     const notify = () => listeners.forEach(listener => listener(adapter.getPlayback()));
     const adapter = {
-      // Function presence indicates available hooks, not verified visual
-      // output. Mocks deliberately leave advanced renderer hooks absent.
+      // List the optional features provided by the supplied functions.
       capabilities: Object.freeze({
         renderer: !!bindings.realRenderer,
         projection: has('setProjection'), lighting: has('setLight'),
@@ -32,8 +22,8 @@
         captureResize: has('beginCaptureSize'), introBoundary: has('isIntroComplete')
       }),
       buildGeometry: options => call('buildWordGeometry', options),
-      // The renderer binding must keep the old mesh if replacement fails.
-      // Colour-only edits use updateColors without rebuilding geometry.
+      // Replace the mesh or update colours without rebuilding it.
+      // The renderer must preserve the old mesh if an upload fails.
       replaceGeometry: (mesh, rgba) => call('replaceGeometry', mesh, rgba),
       updateColors: rgba => call('updateColors', rgba),
       requestRender: () => call('requestRender'),
@@ -54,13 +44,13 @@
           introComplete: has('isIntroComplete') ? bindings.isIntroComplete() : null };
       },
       setProjection: mode => call('setProjection', mode),
-      // Layout changes are allowed in the mock preview without a camera.
+      // Resize the preview when a resize function is available.
       resizePreview: () => has('resizePreview') ? bindings.resizePreview() : undefined,
       setLight: value => call('setLight', value),
       setMaterial: value => call('setMaterial', value),
       setShadow: value => call('setShadow', value),
       beginCaptureSize: (width, height) => call('beginCaptureSize', width, height),
-      // Return cleanup so a disposed UI stops receiving notifications.
+      // Return a function that removes this playback listener.
       subscribePlayback: listener => { listeners.add(listener); return () => listeners.delete(listener); },
       dispose: () => {
         if (has('setFrameCallback')) bindings.setFrameCallback(null);
@@ -70,8 +60,7 @@
     if (has('setFrameCallback')) bindings.setFrameCallback(notify);
     return adapter;
   }
-  // Exports functions for Node tests and the browser's M5 namespace.
-  // The closure keeps internal helpers out of the global scope.
+  // Make the adapter available to browser code and Node tests.
   if (typeof module !== 'undefined' && module.exports) module.exports = { createAdapter };
   root.M5 = Object.assign(root.M5 || {}, { createAdapter });
 })(typeof window === 'undefined' ? globalThis : window);

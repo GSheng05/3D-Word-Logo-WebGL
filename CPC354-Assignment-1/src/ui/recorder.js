@@ -1,4 +1,4 @@
-// recorder.js - Canvas video lifecycle. The final data event arrives before stop.
+// recorder.js - Records the canvas and prepares a downloadable video.
 (function (root) {
   'use strict';
   function createRecorder(canvas, adapter, options = {}) {
@@ -13,7 +13,7 @@
       if (result) env.URL.revokeObjectURL(result.url);
       result = null;
     }
-    // Release each resource exactly once, including partially initialized sessions.
+    // Stop capture and restore the preview, even if recording failed to start.
     function cleanup(current) {
       if (current.cleaned) return;
       current.cleaned = true;
@@ -35,6 +35,7 @@
       cleanup(current);
       publish('error', { error: error.message || 'Recording failed.' });
     }
+    // Combine the collected video chunks after the final data event.
     function finish(current) {
       if (session !== current) return;
       session = null;
@@ -52,6 +53,7 @@
       } catch (error) { publish('error', { error: error.message }); }
       current.chunks.length = 0;
     }
+    // Request a stop; wait for the stop event before restoring the preview.
     function stop(cancel = false) {
       const current = session;
       if (!current || current.stopping) return;
@@ -70,7 +72,7 @@
       publish('starting');
       try {
         current.restore = adapter.beginCaptureSize(height === 720 ? 1280 : 1920, height);
-        // A resize-triggered draw can report a context loss before this call returns.
+        // Stop setup if resizing caused a WebGL error.
         if (session !== current) { current.restore(); return; }
         if (options.setBackground) options.setBackground(true);
         adapter.reset();
@@ -93,7 +95,7 @@
         current.timer = env.setInterval(() => {
           const seconds = Math.floor((env.performance.now() - current.started) / 1000);
           publish('recording', { seconds });
-          // Bound in-memory video size for this local export feature.
+          // Stop after 60 seconds to limit memory use.
           if (seconds >= 60) stop();
         }, 250);
       } catch (error) { fail(error); }
@@ -106,7 +108,7 @@
     return { supported, start, stop: () => stop(false), cancel: () => stop(true), fail, dispose };
   }
 
-  // Keep recording controls separate from scene events so the recording lock cannot block Stop.
+  // Keep Stop and Cancel available while scene controls are locked.
   function initRecording(doc, state, adapter, view, canvas, setBackground) {
     const get = id => doc.getElementById(id), listeners = [], disabled = new Map();
     let recorder;

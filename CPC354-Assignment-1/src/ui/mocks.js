@@ -1,17 +1,8 @@
-// =============================================================
-// mocks.js - Mock geometry, rendering and playback operations
-// -------------------------------------------------------------
-// Provides deterministic data and playback state for UI and contract tests.
-// Geometry consists of triangle fixtures rather than extruded letter meshes.
-// Elapsed time advances only through explicit advance() calls.
-//
-// Public API: M5.validateWord(), makeFixture(), createMockBindings()
-// Depends on: no other scripts; optional onRender callback.
-// =============================================================
+// mocks.js - Supplies simple geometry and playback data for UI tests.
+// Test code advances time manually; these functions do not render a real logo.
 (function (root) {
   'use strict';
-  // Trims outer whitespace and accepts only
-  // 2-4 ASCII letters, then uppercase. Internal spaces are rejected.
+  // Trim outer spaces and accept 2-4 letters (A-Z), converted to uppercase.
   function validateWord(input) {
     if (typeof input !== 'string') throw new TypeError('Word must be text.');
     const word = input.trim();
@@ -23,9 +14,7 @@
   function makeFixture(input, depth) {
     const word = validateWord(input);
     const positions = [], normals = [], faceIds = [], letterIds = [], indices = [];
-    // Give each character position its own letter ID, even for "AA".
-    // Face IDs run 0-5, but these triangles and placeholder
-    // normals must not be used to judge actual surface appearance.
+    // Give repeated letters separate IDs. Face IDs 0-5 are test data only.
     for (let i = 0; i < word.length; i++) {
       const x = i * 2 - (word.length - 1);
       for (let face = 0; face < 6; face++) {
@@ -40,16 +29,14 @@
     }
     const min = [-(word.length - 1), 0, -depth / 2];
     const max = [word.length, 1, depth / 2];
-    // Returns typed vertex arrays and whole-word bounds. This fixture
-    // does not include per-letter bounds.
+    // Return typed vertex arrays and whole-word bounds, without per-letter bounds.
     return { positions: new Float32Array(positions), normals: new Float32Array(normals),
       indices: new Uint16Array(indices), faceIds: new Uint8Array(faceIds),
       letterIds: new Uint8Array(letterIds), word,
       bounds: { min, max, size: max.map((v, i) => v - min[i]), center: max.map((v, i) => (v + min[i]) / 2) },
       parameters: { word, extrusionDepth: depth } };
   }
-  // Each instance owns separate mesh/playback state for isolated tests.
-  // onRender receives a snapshot of references when drawing is requested.
+  // Keep test state separate for each instance; pass it to onRender when requested.
   function createMockBindings(onRender = () => {}) {
     let mesh = null, colour = null, buildCount = 0, rawSpeed = 60, fail = false;
     const state = { running: false, elapsed: 0, transform: { phaseName: 'Mock preview' } };
@@ -65,8 +52,7 @@
       startAnimation() { state.running = true; }, stopAnimation() { state.running = false; },
       resetAnimation() { state.running = false; state.elapsed = 0; },
       setAnimationSpeed(value) { rawSpeed = value; }, getAnimationState() { return state; },
-      // Tests advance time explicitly; no timer runs in these bindings.
-      // The visible prototype motion is supplied separately by CSS.
+      // Advance test time manually without running an animation loop.
       advance(seconds) { if (state.running) state.elapsed += seconds * rawSpeed / 60; },
       // Test hooks expose call counts and trigger one failed replacement.
       inspect() { return { mesh, colour, buildCount, rawSpeed }; },

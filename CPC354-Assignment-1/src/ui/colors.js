@@ -1,10 +1,5 @@
-// =============================================================
-// colors.js - Per-vertex RGBA assignment in object-local coordinates
-// -------------------------------------------------------------
-// Single, front/side, character and gradient modes share the same
-// vertex order as geometry.positions. Each vertex receives four floats.
-// Public API: createColourSettings(), makeColors(mesh, settings).
-// =============================================================
+// colors.js - Generates colours for Single, Front/Side, Per-Letter and Gradient modes.
+// Each vertex receives RGBA values in the same order as the mesh positions.
 (function (root) {
   'use strict';
 
@@ -28,13 +23,13 @@
     };
   }
 
+  // Convert #RRGGBB into red, green and blue values between 0 and 1.
   function parseColour(hex) {
     if (!/^#[0-9a-f]{6}$/i.test(hex)) throw new TypeError('Use a six-digit hex colour.');
     return [1, 3, 5].map(offset => parseInt(hex.slice(offset, offset + 2), 16) / 255);
   }
 
-  // Calculate occupied bounds by character position when metadata is absent.
-  // Supplied geometry and its metadata are never changed by this calculation.
+  // Find each letter's bounds from its vertices if no bounds were supplied.
   function letterBounds(mesh) {
     if (mesh.letterBounds) return mesh.letterBounds;
     const bounds = [];
@@ -50,14 +45,14 @@
     return bounds;
   }
 
-  // Project XY bounding corners onto the gradient axis. Snapping tiny
-  // trigonometric values keeps cardinal directions and endpoints exact.
+  // Find the minimum and maximum positions along the gradient direction.
   function projectionRange(bounds, dx, dy) {
     const xs = [bounds.min[0] * dx, bounds.max[0] * dx];
     const ys = [bounds.min[1] * dy, bounds.max[1] * dy];
     return [Math.min(...xs) + Math.min(...ys), Math.max(...xs) + Math.max(...ys)];
   }
 
+  // Assign each vertex a colour using the selected mode and mesh metadata.
   function makeColors(mesh, settings) {
     const count = mesh.positions.length / 3;
     if (!Number.isInteger(count) || mesh.faceIds.length !== count || mesh.letterIds.length !== count) {
@@ -96,6 +91,7 @@
         const position = mesh.positions[vertex * 3] * dx + mesh.positions[vertex * 3 + 1] * dy;
         const extent = range[1] - range[0];
         const t = extent > 1e-12 ? Math.max(0, Math.min(1, (position - range[0]) / extent)) : 0.5;
+        // Blend between the two colour stops surrounding this position.
         const stop = t * (colours.length - 1);
         const lower = Math.min(Math.floor(stop), colours.length - 2);
         const fraction = stop - lower;

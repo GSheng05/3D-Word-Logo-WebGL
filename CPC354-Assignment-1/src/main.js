@@ -1,4 +1,4 @@
-// main.js - Single startup path connecting geometry, WebGL, animation and Studio controls.
+// main.js - Starts the renderer, animation and Studio controls.
 (function () {
   'use strict';
   function start() {
@@ -13,7 +13,7 @@
       document.getElementById('rendererStatus').textContent = 'Rendering unavailable';
       if (view) view.renderPlayback();
     }
-    // Refit before evaluating the pose so projection/layout changes redraw correctly while paused.
+    // Update the logo size and pose before drawing, including while paused.
     function render() {
       if (!state.mesh) return;
       try {
@@ -41,7 +41,7 @@
         requestRender, startAnimation, stopAnimation, resetAnimation, setAnimationSpeed,
         getAnimationState, setFrameCallback, resizePreview, setProjection,
         setLight: renderer.setLight, setMaterial: renderer.setMaterial,
-        // A recorder retains this cleanup and invokes it on stop, cancellation or failure.
+        // Return a function that restores preview size when recording ends.
         beginCaptureSize(width, height) {
           beginCaptureSize(width, height);
           let ended = false;
@@ -55,7 +55,7 @@
       recording = M5.initRecording(document, state, adapter, view, canvas, active => {
         renderer.setClearColour(active ? [0.035, 0.047, 0.08, 1] : [0, 0, 0, 0]);
       });
-      // Expose the active session for recorder integration and diagnostics.
+      // Expose the current session for integration and debugging.
       M5.app = { state, adapter, recording, dispose };
       window.addEventListener('beforeunload', dispose, { once: true });
       canvas.addEventListener('webglcontextlost', () => report(new Error('WebGL context lost. Reload the page to restore the preview.')));

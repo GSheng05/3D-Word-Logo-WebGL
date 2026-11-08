@@ -1,9 +1,10 @@
-// controls.js - Renders session settings and playback feedback without owning events.
+// controls.js - Updates the interface from current settings and playback state.
 (function (root) {
   'use strict';
   const M5 = root.M5;
   function initControls(doc, state, adapter) {
     const get = id => doc.getElementById(id);
+    // Show or hide interface panels and resize the preview.
     function renderLayout() {
       get('app').classList.toggle('is-hidden', !state.sidebarOpen);
       get('app').classList.toggle('is-focus', state.focus);
@@ -15,6 +16,7 @@
       adapter.resizePreview();
     }
     let started = false;
+    // Update playback labels and disable buttons that cannot be used.
     function renderPlayback() {
       const playback = adapter.getPlayback();
       if (playback.running) started = true;
@@ -36,7 +38,7 @@
       get('depthSlider').value = state.depth;
       get('speedValue').textContent = state.speed.toFixed(1) + 'x';
     }
-    // Picker values come from validated session settings; labels are fixed or validated letters.
+    // Build colour controls for the selected mode using validated settings.
     function renderColours() {
       const settings = state.colours, mode = settings.mode, value = settings[mode];
       get('colourMode').value = mode;
