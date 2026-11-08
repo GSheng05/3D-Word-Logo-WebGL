@@ -5,7 +5,8 @@
 // pixels it draws. When they differ, the picture is stretched or blurry.
 //
 // Depends on: MV.js (radians), camera.js (CAMERA_EYE),
-//             projection.js (PROJ_FOVY, projectionMode), phases.js (setMaxScale)
+//             projection.js (PROJ_FOVY, projectionMode)
+//             phases.js (setMaxScale, HOVER_ROTATE_DEG, HOVER_TILT_DEG, HOVER_SHIFT_X, HOVER_SHIFT_Y)
 // =============================================================
 
 var trackedCanvas = null;
@@ -69,30 +70,41 @@ function endCaptureSize() {
     resizePreview();
 }
 
-// Returns the scale that makes the logo fill `fill` (e.g. 0.9 = 90%) of the
-// screen width or height, whichever runs out first. Measured at the front
-// face, because in perspective the closest part looks the biggest.
-function getFitScale(bounds, aspect, fill) {
+// Returns the scale that makes the logo fill `fill` of the screen.
+// withHover = true: also plan for the hover in phases.js, which turns,
+// tilts and shifts the logo. Each motion is taken at its largest.
+function getFitScale(bounds, aspect, fill, withHover) {
     var dist = CAMERA_EYE[2];
     var t = Math.tan(radians(PROJ_FOVY) / 2);
-    var logoHalfW = bounds.size[0] / 2;
-    var logoHalfH = bounds.size[1] / 2;
-    var front = bounds.max[2]; // z of the front face
+    var halfW = bounds.size[0] / 2;
+    var halfH = bounds.size[1] / 2;
+    var halfD = bounds.size[2] / 2;
+
+    var turn = withHover ? radians(HOVER_ROTATE_DEG) : 0;
+    var tilt = withHover ? radians(HOVER_TILT_DEG) : 0;
+    var shiftX = withHover ? HOVER_SHIFT_X : 0;
+    var shiftY = withHover ? HOVER_SHIFT_Y : 0;
+
+    // Widest, tallest and closest the logo box can get while hovering.
+    var logoHalfW = Math.max(halfW, halfW * Math.cos(turn) + halfD * Math.sin(turn));
+    var logoHalfH = Math.max(halfH, halfH * Math.cos(tilt) + halfD * Math.sin(tilt));
+    var front = halfW * Math.sin(turn) + halfH * Math.sin(tilt) + halfD;
 
     if (projectionMode === "orthographic") {
-        var halfH = dist * t; // same box as in projection.js
-        return Math.min(fill * halfH * aspect / logoHalfW, fill * halfH / logoHalfH);
+        var boxH = dist * t; // same box as in projection.js
+        return Math.min((fill * boxH * aspect - shiftX) / logoHalfW, 
+                        (fill * boxH - shiftY) / logoHalfH);
     }
-    var fitW = fill * dist * t * aspect / (logoHalfW + fill * t * aspect * front);
-    var fitH = fill * dist * t / (logoHalfH + fill * t * front);
+    var fitW = (fill * dist * t * aspect - shiftX) / (logoHalfW + fill * t * aspect * front);
+    var fitH = (fill * dist * t - shiftY) / (logoHalfH + fill * t * front);
     return Math.min(fitW, fitH);
 }
 
 // Call every frame before drawing. Tells the animation how far to enlarge
 // for the current word and window, and returns the starting scale.
 function updateFit(bounds) {
-    var startScale = getFitScale(bounds, canvasAspect, START_FILL);
-    var fullScale = getFitScale(bounds, canvasAspect, FULL_FILL);
+    var startScale = getFitScale(bounds, canvasAspect, START_FILL, false);
+    var fullScale = getFitScale(bounds, canvasAspect, FULL_FILL, true);
     setMaxScale(fullScale / startScale);
     return startScale;
 }
