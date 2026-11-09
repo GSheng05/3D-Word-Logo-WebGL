@@ -45,7 +45,7 @@ Feature count alone does not establish a high mark; the assignment and rubric re
 | M5 | Studio UI, colours, events and recording | Four colour modes, gradients, remembered material settings and video export integrated | Collect UI/export evidence; check narrow layouts |
 | Shared | Startup, testing and submission | Single startup in src/main.js; user-reported browser checks passed | Complete report, videos and viva preparation |
 
-Common/MV.js supplies matrix utilities. Common/initShaders.js remains necessary for standalone animation tests. Both are external helpers documented in Common/SOURCE.md.
+Common/MV.js supplies matrix utilities. Common/initShaders.js is no longer loaded by any page since the standalone animation tests were removed. Both are external helpers documented in Common/SOURCE.md.
 
 ## Run and test
 
@@ -67,9 +67,6 @@ node --test test/geometry.test.cjs tests/*.test.cjs
 The tests need Node.js but no npm dependencies. Test utilities are retained:
 
 - [Geometry lab](test/geometry-test.html): geometry and metadata inspection.
-- [Word animation](animation_test.html): standalone animation using real word geometry.
-- [Cube animation](test/animation-test.html): isolated animation test.
-- src/animation/animationControls.js and Common/initShaders.js support the animation test pages.
 - src/ui/mocks.js supports automated UI tests; it is not loaded by Studio.
 - coloursFor() supports the renderer diagnostic page; applyColour() is used by UI tests.
 
@@ -143,7 +140,7 @@ const mesh = buildWordGeometry({
 5. For M3, derive camera fit from bounds and allow space for rotation/hover. Establish a separate enlargement target; do not auto-fit away the visible enlargement during animation.
 6. For M4, load phases.js before animation.js. Existing hooks include setRenderCallback(), setFrameCallback(), requestRender(), getAnimationModelMatrix(), startAnimation(), stopAnimation(), resetAnimation(), setAnimationSpeed() (60 = 1x), getAnimationState(), and setMaxScale(). Inspect actual source before integration.
 7. Agree who composes the model matrix: M4 currently does it. Do not apply M3 and M4 transforms twice. Keep a single animation-frame loop.
-8. For M5, playback and speed are bound by src/ui through adapter.js. animationControls.js is for the standalone animation test pages only: index.html must not load it or call initAnimationControls(), so controls are bound once.
+8. For M5, playback and speed are bound by src/ui through adapter.js. This is the only place animation controls are bound; the standalone animation test pages and animationControls.js were removed.
 9. Verify that edits while paused redraw correctly, invalid input preserves the previous mesh, resize works, and colour updates need not rebuild positions.
 10. Run relevant checks, record actual results, and update this README using the protocol below before handing off.
 
@@ -258,3 +255,14 @@ Copy this template for the next handoff:
 - No new browser verification was performed. Earlier Studio and export checks were reported successful by the user.
 - Next: M5 checks narrow-screen playback labels; relevant owners collect report evidence. Review renderer diagnostic dependencies before using that page.
 - Delivery: local changes only; no commit or push performed for this cleanup.
+
+### Handoff: M4 test page removal - 2026-11-09
+- Code baseline / commit(s): 958a465 plus local deletions.
+- Completed changes and files: deleted src/animation/animationControls.js, animation_test.html and test/animation-test.html. Kept the geometry tests, geometry lab and renderer preview in test/.
+- Interface decisions or changes: none. index.html, main.js and the UI adapter never used the deleted files; playback is bound only through src/ui/adapter.js.
+- Verification commands and actual results: `node --test test/geometry.test.cjs tests/*.test.cjs` passed 33 of 33.
+- Browser checks / unverified behaviour: no new browser check; index.html did not load the deleted files.
+- Remaining blockers and known issues: Common/initShaders.js is no longer loaded by any page; the group decides whether to keep it.
+- Next owner and first concrete task: none for M4.
+- Report updates: section 4.5 does not describe the removed test pages.
+- Repository delivery status: local only.
