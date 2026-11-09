@@ -123,3 +123,33 @@ test('recording UI locks scene and playback until finalization then offers downl
   assert.equal(node('recordDownload').download, 'logo-1080p.webm');
   recording.dispose(); view.dispose();
 });
+
+test('geometry sliders rebuild the logo and preserve settings across word and depth edits', () => {
+  const { context: c, node, draws } = boot(), { state, adapter } = c.M5.app;
+  const before = draws();
+  for (const [blockSize, letterSpacing] of [[0.2, 0], [2, 4], [1.3, 2.1]]) {
+    node('blockSizeSlider').listeners.input({ target: { value: String(blockSize) } });
+    node('letterSpacingSlider').listeners.input({ target: { value: String(letterSpacing) } });
+    assert.equal(state.mesh.parameters.blockSize, blockSize);
+    assert.equal(state.mesh.parameters.letterSpacing, letterSpacing);
+    assert.equal(node('blockSizeValue').textContent, blockSize.toFixed(1));
+    assert.equal(node('letterSpacingValue').textContent, letterSpacing.toFixed(1));
+  }
+  c.M5.applyWord(state, 'LOGO', adapter);
+  c.M5.applyDepth(state, 2, adapter);
+  assert.equal(state.mesh.parameters.blockSize, 1.3);
+  assert.equal(state.mesh.parameters.letterSpacing, 2.1);
+  c.M5.applyWord(state, '!', adapter);
+  node('letterSpacingSlider').listeners.input({ target: { value: '0' } });
+  assert.equal(state.mesh.word, 'LOGO');
+  const mesh = state.mesh;
+  const replaceGeometry = adapter.replaceGeometry;
+  adapter.replaceGeometry = () => { throw new Error('Upload failed'); };
+  node('blockSizeSlider').listeners.input({ target: { value: '2' } });
+  assert.equal(state.mesh, mesh);
+  assert.equal(state.blockSize, 1.3);
+  assert.equal(node('blockSizeSlider').value, 1.3);
+  adapter.replaceGeometry = replaceGeometry;
+  assert.ok(draws() > before);
+  assert.equal(adapter.getPlayback().running, false);
+});

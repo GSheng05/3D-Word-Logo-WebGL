@@ -6,7 +6,7 @@
   // Keep draft input separate from the last valid logo.
   // Store sidebar visibility independently from Focus Mode.
   function createState(config = {}) {
-    return { draftWord: 'USM', renderedWord: '', depth: 1, colour: '#80a8ff', mesh: null,
+    return { draftWord: 'USM', renderedWord: '', depth: 1, blockSize: 1, letterSpacing: 1, colour: '#80a8ff', mesh: null,
       speed: 1, sidebarOpen: true, focus: false, recording: false,
       colours: colourApi.createColourSettings(), projection: 'perspective',
       light: { ...(config.light || { horizontal: -45, vertical: 35, intensity: 1 }) },
@@ -23,14 +23,15 @@
     for (let i = 0; i < result.length; i += 4) result.set([...rgb, 1], i);
     return result;
   }
-  // Build and upload the mesh before saving the new word or depth.
+  // Build and upload the mesh before saving the new geometry settings.
   // Return errors to the UI; the renderer handles failed uploads.
-  function replace(state, word, depth, adapter) {
+  function replace(state, word, depth, adapter, blockSize = state.blockSize, letterSpacing = state.letterSpacing) {
     try {
-      const mesh = adapter.buildGeometry({ word, extrusionDepth: depth });
+      const mesh = adapter.buildGeometry({ word, extrusionDepth: depth, blockSize, letterSpacing });
       const colors = colourApi.makeColors(mesh, state.colours);
       adapter.replaceGeometry(mesh, colors);
       state.mesh = mesh; state.renderedWord = mesh.word; state.depth = depth;
+      state.blockSize = blockSize; state.letterSpacing = letterSpacing;
       // A paused logo must also show edits; no playback reset is needed.
       adapter.requestRender();
       return { ok: true };
@@ -42,6 +43,14 @@
   function applyDepth(state, depth, adapter) {
     if (!Number.isFinite(depth) || depth <= 0) return { ok: false, error: 'Depth must be positive.' };
     return replace(state, state.renderedWord, depth, adapter);
+  }
+  function applyBlockSize(state, blockSize, adapter) {
+    if (!Number.isFinite(blockSize) || blockSize <= 0) return { ok: false, error: 'Block size must be positive.' };
+    return replace(state, state.renderedWord, state.depth, adapter, blockSize);
+  }
+  function applyLetterSpacing(state, letterSpacing, adapter) {
+    if (!Number.isFinite(letterSpacing) || letterSpacing < 0) return { ok: false, error: 'Letter spacing must be non-negative.' };
+    return replace(state, state.renderedWord, state.depth, adapter, state.blockSize, letterSpacing);
   }
   // Reuse the current mesh and update only its colour data.
   function applyColour(state, colour, adapter) {
@@ -81,7 +90,7 @@
     }
   }
 
-  const api = { createState, applyWord, applyDepth, applyColour, coloursFor, applyColourSettings, applyMaterial };
+  const api = { createState, applyWord, applyDepth, applyBlockSize, applyLetterSpacing, applyColour, coloursFor, applyColourSettings, applyMaterial };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.M5 = Object.assign(root.M5 || {}, api);
 })(typeof window === 'undefined' ? globalThis : window);

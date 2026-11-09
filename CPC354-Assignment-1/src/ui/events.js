@@ -30,6 +30,12 @@
       if (result.ok) view.renderColours();
     }
     on(get('wordInput'), 'input', word); on(get('wordInput'), 'compositionend', word);
+    on(get('blockSizeSlider'), 'input', event => {
+      feedback(M5.applyBlockSize(state, Number(event.target.value), adapter)); view.renderPreview();
+    });
+    on(get('letterSpacingSlider'), 'input', event => {
+      feedback(M5.applyLetterSpacing(state, Number(event.target.value), adapter)); view.renderPreview();
+    });
     on(get('depthSlider'), 'input', event => {
       feedback(M5.applyDepth(state, Number(event.target.value), adapter)); view.renderPreview();
     });
