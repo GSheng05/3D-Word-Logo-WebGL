@@ -258,3 +258,8 @@ Copy this template for the next handoff:
 - No new browser verification was performed. Earlier Studio and export checks were reported successful by the user.
 - Next: M5 checks narrow-screen playback labels; relevant owners collect report evidence. Review renderer diagnostic dependencies before using that page.
 - Delivery: local changes only; no commit or push performed for this cleanup.
+
+### Handoff: UI label cleanup - 2026-11-09
+- Removed the header subtitle and both WebGL badges; retained Logo Studio and all controls.
+- Removed the reference to the deleted status badge; rendering errors still appear in statusMessage.
+- Delivery: local changes only.

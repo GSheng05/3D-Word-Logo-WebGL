@@ -10,7 +10,6 @@
       stopAnimation();
       if (recording) recording.fail(error);
       status.textContent = error.message;
-      document.getElementById('rendererStatus').textContent = 'Rendering unavailable';
       if (view) view.renderPlayback();
     }
     // Update the logo size and pose before drawing, including while paused.
