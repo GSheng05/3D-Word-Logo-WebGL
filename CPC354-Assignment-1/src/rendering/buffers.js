@@ -1,13 +1,17 @@
-// M2: GPU buffers for M1's indexed mesh and M5's RGBA colours.
-// No geometry generation, colour calculation, animation or draw loop lives here.
+// M2: GPU buffer management for M1's indexed mesh geometry and M5's RGBA colours.
+// Provides safe, transactional buffer creation, replacement with automatic rollback,
+// isolated dynamic colour updates, and shader attribute binding.
 (function (root) {
     'use strict';
 
+    /**
+     * Validates that colour data matches the mesh vertex count and formatting rules.
+     * - Must be a Float32Array of length 4 * vertexCount (RGBA components).
+     * - Every channel must be a finite number within [0, 1].
+     */
     function validateColours(rgba, vertexCount) {
         if (
-            !(rgba instanceof Float32Array) ||
-            rgba.length !== vertexCount * 4
-        ) {
+            !(rgba instanceof Float32Array) || rgba.length !== vertexCount * 4) {
             throw new TypeError(
                 'Colours must be Float32Array RGBA records matching the vertices.'
             );
@@ -22,47 +26,35 @@
         }
     }
 
+    /**
+     * Validates that mesh geometry conforms to required WebGL structures before upload:
+     * - positions: Float32Array of XYZ coordinates (length must be a multiple of 3).
+     * - normals: Float32Array matching positions length.
+     * - indices: Uint16Array of triangle vertex indices (length must be a multiple of 3).
+     * - Every index must be strictly less than vertexCount.
+     * Returns the validated vertexCount.
+     */
     function validateMesh(mesh, rgba) {
-        if (
-            !mesh ||
-            !(mesh.positions instanceof Float32Array) ||
-            !mesh.positions.length ||
-            mesh.positions.length % 3 !== 0
-        ) {
-            throw new TypeError(
-                'Positions must be a nonempty Float32Array of XYZ records.'
-            );
+        if (!mesh || !(mesh.positions instanceof Float32Array) || !mesh.positions.length || mesh.positions.length % 3 !== 0) {
+            throw new TypeError('Positions must be a nonempty Float32Array of XYZ records.');
         }
 
-        if (
-            !(mesh.normals instanceof Float32Array) ||
-            mesh.normals.length !== mesh.positions.length
-        ) {
-            throw new TypeError(
-                'Normals must match the position records.'
-            );
+        if (!(mesh.normals instanceof Float32Array) || mesh.normals.length !== mesh.positions.length) {
+            throw new TypeError('Normals must match the position records.');
         }
 
         for (const array of [mesh.positions, mesh.normals]) {
             for (const value of array) {
                 if (!Number.isFinite(value)) {
-                    throw new RangeError(
-                        'Positions and normals must contain finite numbers.'
-                    );
+                    throw new RangeError('Positions and normals must contain finite numbers.');
                 }
             }
         }
 
         const vertexCount = mesh.positions.length / 3;
 
-        if (
-            !(mesh.indices instanceof Uint16Array) ||
-            !mesh.indices.length ||
-            mesh.indices.length % 3 !== 0
-        ) {
-            throw new TypeError(
-                'Indices must be a nonempty Uint16Array of triangles.'
-            );
+        if (!(mesh.indices instanceof Uint16Array) || !mesh.indices.length || mesh.indices.length % 3 !== 0) {
+            throw new TypeError('Indices must be a nonempty Uint16Array of triangles.');
         }
 
         for (const index of mesh.indices) {
@@ -75,41 +67,47 @@
         return vertexCount;
     }
 
-    /** Each manager owns the buffers for one active logo in one WebGL context. */
+    /**
+     * Factory function: Creates a buffer manager instance for one WebGL context.
+     * Manages the lifecycle of position, normal, colour, and index GPU buffers.
+     */
     function create(gl) {
         let active = null;
         let disposed = false;
 
+        /** Guard: Throws if operations are invoked on a disposed manager. */
         function ensureActive() {
             if (disposed) {
                 throw new Error('The buffer manager has been disposed.');
             }
         }
 
-        // WebGL normally reports errors through getError(), not exceptions.
+        /** Helper: Checks for WebGL context loss or asynchronous GPU errors. */
         function checkGPU(label) {
             if (gl.isContextLost()) {
-                throw new Error(
-                    'WebGL context lost during ' + label + '.'
-                );
+                throw new Error('WebGL context lost during ' + label + '.');
             }
 
             const error = gl.getError();
-
             if (error !== gl.NO_ERROR) {
-                throw new Error(
-                    label + ': WebGL error 0x' + error.toString(16)
-                );
+                throw new Error(label + ': WebGL error 0x' + error.toString(16));
             }
         }
 
+        /** Helper: Deletes an object map of WebGLBuffer handles. */
         function release(buffers) {
             for (const buffer of Object.values(buffers)) {
                 gl.deleteBuffer(buffer);
             }
         }
 
-        /** Upload a candidate without disturbing the caller's buffer bindings. */
+        /**
+         * State-preserving GPU buffer allocation and upload:
+         * 1. Records the current buffer binding (ARRAY_BUFFER or ELEMENT_ARRAY_BUFFER).
+         * 2. Allocates and uploads data to a new GPU buffer.
+         * 3. Always restores the previous binding via a `finally` block to prevent GL side effects.
+         * 4. Deletes the allocated buffer if any error occurs during upload.
+         */
         function upload(target, data, usage) {
             const binding = target === gl.ARRAY_BUFFER
                 ? gl.ARRAY_BUFFER_BINDING
@@ -136,48 +134,35 @@
             }
         }
 
-        /** Commit a whole mesh only after every candidate buffer uploads. */
+        /**
+         * Two-phase commit geometry replacement:
+         * 1. Validates mesh and colours.
+         * 2. Stages all four candidate buffers (position, normal, colour, index).
+         * 3. Rollback: If any upload fails, deletes candidate buffers and keeps existing mesh active.
+         * 4. Commit: If all uploads succeed, activates candidate buffers and releases old ones.
+         */
         function replaceGeometry(mesh, rgba) {
             ensureActive();
 
             const vertexCount = validateMesh(mesh, rgba);
-
             checkGPU('Before mesh replacement');
 
             const candidate = {};
 
             try {
-                candidate.position = upload(
-                    gl.ARRAY_BUFFER,
-                    mesh.positions,
-                    gl.STATIC_DRAW
-                );
-
-                candidate.normal = upload(
-                    gl.ARRAY_BUFFER,
-                    mesh.normals,
-                    gl.STATIC_DRAW
-                );
-
-                candidate.colour = upload(
-                    gl.ARRAY_BUFFER,
-                    rgba,
-                    gl.DYNAMIC_DRAW
-                );
-
-                candidate.index = upload(
-                    gl.ELEMENT_ARRAY_BUFFER,
-                    mesh.indices,
-                    gl.STATIC_DRAW
-                );
+                // Upload vertex attributes and face indices
+                candidate.position = upload(gl.ARRAY_BUFFER, mesh.positions, gl.STATIC_DRAW);
+                candidate.normal   = upload(gl.ARRAY_BUFFER, mesh.normals,   gl.STATIC_DRAW);
+                candidate.colour   = upload(gl.ARRAY_BUFFER, rgba,           gl.DYNAMIC_DRAW);
+                candidate.index    = upload(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.STATIC_DRAW);
             } catch (error) {
-                // Keep the previous active mesh and release failed candidates.
+                // Rollback: Keep previous active mesh and clean up candidate allocations
                 release(candidate);
                 throw error;
             }
 
+            // Commit: replace active state and delete obsolete buffers
             const previous = active;
-
             active = {
                 buffers: candidate,
                 vertexCount,
@@ -189,7 +174,11 @@
             }
         }
 
-        /** Replace only colour storage; geometry and its indices stay intact. */
+        /**
+         * Isolated dynamic colour replacement:
+         * Stages and uploads only a new colour VBO under DYNAMIC_DRAW.
+         * Preserves existing position, normal, and index buffers without reallocating geometry.
+         */
         function updateColors(rgba) {
             ensureActive();
 
@@ -200,20 +189,20 @@
             validateColours(rgba, active.vertexCount);
             checkGPU('Before colour update');
 
-            // Stage a new colour buffer so a failed upload retains old colours.
-            const next = upload(
-                gl.ARRAY_BUFFER,
-                rgba,
-                gl.DYNAMIC_DRAW
-            );
-
+            // Stage a new colour buffer so a failed upload retains the old colours
+            const next = upload(gl.ARRAY_BUFFER, rgba, gl.DYNAMIC_DRAW);
             const previous = active.buffers.colour;
 
             active.buffers.colour = next;
             gl.deleteBuffer(previous);
         }
 
-        /** Bind immediately before drawing, including after any replacement. */
+        /**
+         * Connects active buffers to shader attribute locations immediately before drawing:
+         * - Binds VBOs and configures vertexAttribPointer for position (3), normal (3), colour (4).
+         * - Enables the corresponding vertex attribute arrays.
+         * - Binds the index buffer to ELEMENT_ARRAY_BUFFER for gl.drawElements().
+         */
         function bind(attributes) {
             ensureActive();
 
@@ -222,9 +211,7 @@
             }
 
             if (!attributes) {
-                throw new TypeError(
-                    'Shader attribute locations are required.'
-                );
+                throw new TypeError('Shader attribute locations are required.');
             }
 
             const layout = [
@@ -233,34 +220,21 @@
                 ['colour', 4]
             ];
 
-            // Normals are uploaded now but are unused by the Phase 1 shader.
-            // Later lighting shaders can supply attributes.normal.
+            // Filter enabled attributes (normals can be conditionally omitted if not in shader)
             const enabled = layout.filter(([name]) =>
-                name !== 'normal' ||
-                (
-                    attributes.normal !== undefined &&
-                    attributes.normal !== -1
-                )
+                name !== 'normal' || (attributes.normal !== undefined && attributes.normal !== -1)
             );
 
-            // Check all locations before changing attribute bindings.
+            // Validate all attribute locations before modifying GL state
             for (const [name] of enabled) {
-                if (
-                    !Number.isInteger(attributes[name]) ||
-                    attributes[name] < 0
-                ) {
-                    throw new TypeError(
-                        'Invalid shader attribute location: ' + name
-                    );
+                if (!Number.isInteger(attributes[name]) || attributes[name] < 0) {
+                    throw new TypeError('Invalid shader attribute location: ' + name);
                 }
             }
 
+            // Bind each vertex buffer and attach to shader attribute
             for (const [name, components] of enabled) {
-                gl.bindBuffer(
-                    gl.ARRAY_BUFFER,
-                    active.buffers[name]
-                );
-
+                gl.bindBuffer(gl.ARRAY_BUFFER, active.buffers[name]);
                 gl.vertexAttribPointer(
                     attributes[name],
                     components,
@@ -269,19 +243,18 @@
                     0,
                     0
                 );
-
                 gl.enableVertexAttribArray(attributes[name]);
             }
 
-            gl.bindBuffer(
-                gl.ELEMENT_ARRAY_BUFFER,
-                active.buffers.index
-            );
-
+            // Bind element array buffer for indexed drawing
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, active.buffers.index);
             return true;
         }
 
-        /** Release owned buffers once; safe to call during repeated cleanup. */
+        /**
+         * Releases all GPU buffers owned by this manager.
+         * Safe to call repeatedly during shutdown.
+         */
         function dispose() {
             if (disposed) {
                 return;
