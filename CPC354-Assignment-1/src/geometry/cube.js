@@ -2,11 +2,11 @@
 var GEOMETRY_FACE_NAMES = Object.freeze(['front', 'back', 'top', 'bottom', 'right', 'left']);
 // Defines what index is which face
 
-// World units: 0.01..100 for block/depth, 0..100 for inter-letter spacing.
+// World units: 0.01..10 for block/depth, 0..10 for inter-letter spacing.
 function validateGeometryNumber(value, name, allowZero) {
-    var minimum = allowZero ? 0 : 0.01;
-    if (typeof value !== 'number' || !Number.isFinite(value) || value < minimum || value > 100) {
-        throw new RangeError(name + ' must be a finite number from ' + minimum + ' to 100.');
+    var minimum = allowZero ? 0 : 0.1;
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < minimum || value > 10) {
+        throw new RangeError(name + ' must be a finite number from ' + minimum + ' to 10.');
     }
     return value;
 }
