@@ -44,11 +44,12 @@
     if (!Number.isFinite(depth) || depth <= 0) return { ok: false, error: 'Depth must be positive.' };
     return replace(state, state.renderedWord, depth, adapter);
   }
-  // Mesh builders enforce validateGeometryNumber limits before uploading.
   function applyBlockSize(state, blockSize, adapter) {
+    if (!Number.isFinite(blockSize) || blockSize <= 0) return { ok: false, error: 'Block size must be positive.' };
     return replace(state, state.renderedWord, state.depth, adapter, blockSize);
   }
   function applyLetterSpacing(state, letterSpacing, adapter) {
+    if (!Number.isFinite(letterSpacing) || letterSpacing < 0) return { ok: false, error: 'Letter spacing must be non-negative.' };
     return replace(state, state.renderedWord, state.depth, adapter, state.blockSize, letterSpacing);
   }
   // Reuse the current mesh and update only its colour data.

@@ -34,9 +34,9 @@
     }
     function renderPreview() {
       get('previewCaption').textContent = state.renderedWord + ' - real-time WebGL';
-      get('blockSizeValue').textContent = state.blockSize.toFixed(2);
+      get('blockSizeValue').textContent = state.blockSize.toFixed(1);
       get('blockSizeSlider').value = state.blockSize;
-      get('letterSpacingValue').textContent = state.letterSpacing.toFixed(2);
+      get('letterSpacingValue').textContent = state.letterSpacing.toFixed(1);
       get('letterSpacingSlider').value = state.letterSpacing;
       get('depthValue').textContent = state.depth.toFixed(1);
       get('depthSlider').value = state.depth;
