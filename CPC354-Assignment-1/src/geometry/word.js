@@ -21,7 +21,7 @@ function geometryBounds(positions) {
             min[axis] = Math.min(min[axis], positions[i + axis]);
             max[axis] = Math.max(max[axis], positions[i + axis]);
         }
-    }
+    } // x = -0.5 x = 16.5, 8, -x= -8.5 x=8.5 //USM
     return {
         min: min, max: max,
         size: max.map(function (value, axis) { return value - min[axis]; }),
@@ -42,8 +42,8 @@ function buildWordGeometry(options = {}) {
     var positions = [], normals = [], indices = [], faceIds = [], letterIds = [];
     var blockCount = 0;
     for (var letter = 0; letter < word.length; letter++) {
-        var bitmap = FONT_5X7[word[letter]];
-        // Spacing is a world-unit gap between five-column character boxes.
+        var bitmap = FONT_5X7[word[letter]]; 
+        // Spacing is a world-unit gap between five-column character boxes. 
         var startX = letter * (FONT_WIDTH * blockSize + letterSpacing);
 
         for (var row = 0; row < FONT_HEIGHT; row++) {
@@ -79,7 +79,7 @@ function buildWordGeometry(options = {}) {
         normals: new Float32Array(normals),
         indices: new Uint16Array(indices), 
         faceIds: new Uint8Array(faceIds),
-        letterIds: new Uint8Array(letterIds), 
+        letterIds: new Uint8Array(letterIds), // MUM 
         bounds: geometryBounds(typedPositions),
         word: word, blockCount: blockCount,
         parameters: { 

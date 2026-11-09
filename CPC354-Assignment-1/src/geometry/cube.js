@@ -2,7 +2,6 @@
 var GEOMETRY_FACE_NAMES = Object.freeze(['front', 'back', 'top', 'bottom', 'right', 'left']);
 // Defines what index is which face
 
-// Practical numerical limits shared by the public mesh builders and the UI.
 // World units: 0.01..100 for block/depth, 0..100 for inter-letter spacing.
 function validateGeometryNumber(value, name, allowZero) {
     var minimum = allowZero ? 0 : 0.01;
@@ -46,8 +45,8 @@ function makeCube(blockSize = 1, extrusionDepth = 1) {
             faceIds.push(faceId);
         });
         
-        indices.push(base, base + 1, base + 2, 
-                    base, base + 2, base + 3);
+        indices.push(base, base + 1, base + 2, //First triangle
+                    base, base + 2, base + 3); //Second triangle
     });
     return {
         positions: new Float32Array(positions), normals: new Float32Array(normals),
