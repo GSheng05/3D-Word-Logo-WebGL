@@ -127,13 +127,13 @@ test('recording UI locks scene and playback until finalization then offers downl
 test('geometry sliders rebuild the logo and preserve settings across word and depth edits', () => {
   const { context: c, node, draws } = boot(), { state, adapter } = c.M5.app;
   const before = draws();
-  for (const [blockSize, letterSpacing] of [[0.2, 0], [2, 4], [1.3, 2.1]]) {
+  for (const [blockSize, letterSpacing] of [[0.01, 0], [100, 100], [1.3, 2.1]]) {
     node('blockSizeSlider').listeners.input({ target: { value: String(blockSize) } });
     node('letterSpacingSlider').listeners.input({ target: { value: String(letterSpacing) } });
     assert.equal(state.mesh.parameters.blockSize, blockSize);
     assert.equal(state.mesh.parameters.letterSpacing, letterSpacing);
-    assert.equal(node('blockSizeValue').textContent, blockSize.toFixed(1));
-    assert.equal(node('letterSpacingValue').textContent, letterSpacing.toFixed(1));
+    assert.equal(node('blockSizeValue').textContent, blockSize.toFixed(2));
+    assert.equal(node('letterSpacingValue').textContent, letterSpacing.toFixed(2));
   }
   c.M5.applyWord(state, 'LOGO', adapter);
   c.M5.applyDepth(state, 2, adapter);
@@ -152,4 +152,22 @@ test('geometry sliders rebuild the logo and preserve settings across word and de
   adapter.replaceGeometry = replaceGeometry;
   assert.ok(draws() > before);
   assert.equal(adapter.getPlayback().running, false);
+});
+
+
+test('geometry controls use the mesh validator and reject out-of-range values', () => {
+  const { context: c } = boot(), { state, adapter } = c.M5.app;
+  const mesh = state.mesh;
+  for (const value of [0, 0.009, 100.01, NaN, Infinity]) {
+    const result = c.M5.applyBlockSize(state, value, adapter);
+    assert.equal(result.ok, false);
+    assert.match(result.error, /from 0.01 to 100/);
+    assert.equal(state.mesh, mesh);
+  }
+  for (const value of [-0.01, 100.01, NaN, Infinity]) {
+    const result = c.M5.applyLetterSpacing(state, value, adapter);
+    assert.equal(result.ok, false);
+    assert.match(result.error, /from 0 to 100/);
+    assert.equal(state.mesh, mesh);
+  }
 });
