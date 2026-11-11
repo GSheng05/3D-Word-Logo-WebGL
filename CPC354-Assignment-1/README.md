@@ -81,7 +81,6 @@ Export records from the animation's beginning at 720p or 1080p, targeting 30 fps
 | [word.js](src/geometry/word.js) | Word validation, block placement, index offsets, letter assembly, actual-bounds centring |
 | [geometry.test.cjs](test/geometry.test.cjs) | Six automated test groups |
 | [geometry-preview.js](test/geometry-preview.js) | Test-only WebGL adapter; not M2/M3/M5 production code |
-| [M1 guide](docs/M1-geometry.md) | Mathematics, API contract, integration checklist, video outline |
 
 The mesh uses 24 vertex records and 36 indices per block. Corner locations are duplicated across faces so each face has its own normal.
 Normals remain unchanged under the translations used to assemble the word.
@@ -129,11 +128,11 @@ const mesh = buildWordGeometry({
 - Default USM dimensions are **17 × 7 × 1**. Default LOGO dimensions are **23 × 7 × 1**.
 - Last year's code used four-component positions and much smaller default blocks. Do not copy its attribute sizes or camera settings unchanged.
 - Rebuild geometry for word/size/spacing/depth changes only. Speed and camera changes do not require rebuilding it.
-- See the M1 guide for the detailed equations. No external matrix library is required by M1.
+- No external matrix library is required by M1.
 
 ## Instructions for the next contributor / AI agent
 
-1. Read this README, the M1 guide, applicable repository instructions, and the files you will change.
+1. Read this README, applicable repository instructions, and the files you will change.
 2. Inspect the latest branch and local changes. Preserve others' work and distinguish current code from plans.
 3. Preserve the integrated renderer and bounds-based framing. Do not replace M1 with a new text-generation approach without a documented reason.
 4. For M2, use size-3 position attributes and construct vec4(position, 1.0) in the shader as needed. Transform normals consistently with the lighting coordinate space.
